@@ -1,0 +1,971 @@
+{
+ "version": 1,
+ "models": [
+  {
+   "id": "sedan_tesla_model3",
+   "file": "media/p2p/models/sedan/sedan_tesla_model3.glb",
+   "category": "sedan",
+   "name": "Tesla Model 3",
+   "license": "CC-BY-4.0",
+   "author": "wintrez",
+   "attribution": "\"Tesla M3 model\" (https://sketchfab.com/3d-models/tesla-m3-model-3a602469d7874d1397efa67182198705) by wintrez (https://sketchfab.com/wintrez), licensed under CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/). Modified: scaled to metres (L 4.69 m), re-oriented to +X forward / +Y up, re-centred on the ground; interior and licence-plate meshes removed; headlight and taillight lens faces split out of the window-glass materials.",
+   "source_url": "https://sketchfab.com/3d-models/tesla-m3-model-3a602469d7874d1397efa67182198705",
+   "download_url": "https://huggingface.co/datasets/allenai/objaverse/resolve/main/glbs/000-135/3a602469d7874d1397efa67182198705.glb",
+   "triangles": 159752,
+   "bbox_m": [
+    4.694,
+    2.096,
+    1.456
+   ],
+   "scale_to_m": 1.0,
+   "forward_axis": "+X",
+   "up_axis": "+Y",
+   "origin": "footprint centre on the ground (x/z centred, min y = 0)",
+   "materials": {
+    "body": [
+     "carpaint"
+    ],
+    "glass": [
+     "glass",
+     "glassDark"
+    ],
+    "tyre": [
+     "TireRubber"
+    ],
+    "rim": [
+     "Tire_Rims"
+    ],
+    "light_front": [
+     "headlight_glass"
+    ],
+    "light_rear": [
+     "taillight_glass",
+     "RedLight"
+    ],
+    "other": [
+     "BlackWash",
+     "Silver",
+     "innerLights",
+     "innerLightMetals",
+     "OrangeLights",
+     "Breaks",
+     "Mirror",
+     "carBrand"
+    ]
+   },
+   "animations": [],
+   "preview": "assets/preview/sedan_tesla_model3.png",
+   "notes": "Best overall car: smooth Blender model, untextured PBR materials (no textures at all). glassDark = panoramic roof + rear glass. Wheels are part of one mesh (not separate wheel nodes). Interior removed -> keep glass dark/opaque (FSD style). Brand names, badges and logos visible on the model are trademarks of their owners; the CC licence covers the 3D model only.",
+   "source_transform": {
+    "orig_forward_axis": "+Z",
+    "orig_up_axis": "+Y",
+    "orig_scale_to_m": 0.286122,
+    "processing": "interior removed (GlossyInterior, BlackSuade, LightGrayInterior, interiorGray, Wood, White, LicensePlate*); glass split by region into headlight_glass / taillight_glass"
+   },
+   "axles": {
+    "x_m": [
+     -1.404,
+     1.55
+    ],
+    "front_axle_x_m": 1.55,
+    "rear_axle_x_m": -1.404,
+    "wheelbase_m": 2.954,
+    "wheel_radius_m": 0.367,
+    "track_outer_m": 1.858,
+    "method": "ground-contact vertices (y < 2.5 cm) of the tyre material, clustered along x; radius = half the tyre height"
+   },
+   "license_verified": "Sketchfab model page + API license field = 'CC Attribution' (checked 2026-10-19)",
+   "file_original": "assets/models/sedan/sedan_tesla_model3.glb"
+  },
+  {
+   "id": "sedan_mercedes_e_w212",
+   "file": "media/p2p/models/sedan/sedan_mercedes_e_w212.glb",
+   "category": "sedan",
+   "name": "Mercedes-Benz E-Class (W212)",
+   "license": "CC-BY-4.0",
+   "author": "Peter_D (better_peter)",
+   "attribution": "\"Mercedes E Class W212\" (https://sketchfab.com/3d-models/mercedes-e-class-w212-119c5e10733142b197aa53b86f6aeb04) by Peter_D (better_peter) (https://sketchfab.com/better_peter), licensed under CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/). Modified: scaled to metres (L 4.88 m), re-oriented, re-centred; interior removed; headlight lens split from window glass; trims / wheels / underbody decimated (meshopt) to stay near 200k triangles; textures resized to 1024 px WebP.",
+   "source_url": "https://sketchfab.com/3d-models/mercedes-e-class-w212-119c5e10733142b197aa53b86f6aeb04",
+   "download_url": "https://huggingface.co/datasets/allenai/objaverse/resolve/main/glbs/000-132/119c5e10733142b197aa53b86f6aeb04.glb",
+   "triangles": 219881,
+   "bbox_m": [
+    4.879,
+    2.15,
+    1.451
+   ],
+   "scale_to_m": 1.0,
+   "forward_axis": "+X",
+   "up_axis": "+Y",
+   "origin": "footprint centre on the ground (x/z centred, min y = 0)",
+   "materials": {
+    "body": [
+     "mat_body"
+    ],
+    "glass": [
+     "mat_glass"
+    ],
+    "tyre": [
+     "mat_tires"
+    ],
+    "rim": [
+     "mat_wheels"
+    ],
+    "light_front": [
+     "headlight_glass"
+    ],
+    "light_rear": [
+     "mat_lights_glass",
+     "mat_lights_glass2"
+    ],
+    "other": [
+     "mat_plastic",
+     "mat_chrome",
+     "mat_rubber",
+     "mat_lights",
+     "mat_bottom",
+     "mat_brakes"
+    ]
+   },
+   "animations": [],
+   "preview": "assets/preview/sedan_mercedes_e_w212.png",
+   "notes": "Classic 3-box sedan. Separate pivot nodes for wheels (WheelFL, WheelFR, WheelRL, WheelRR), doors, hood and trunk (opening animations from the source were dropped). mat_body carries a metallic-roughness + AO texture; replacing the material for uniform paint is fine. Brand names, badges and logos visible on the model are trademarks of their owners; the CC licence covers the 3D model only.",
+   "source_transform": {
+    "orig_forward_axis": "-Z",
+    "orig_up_axis": "+Y",
+    "orig_scale_to_m": 1.00167,
+    "processing": "interior removed (mat_salon, mat_leather, mat_inside_panel, mat_inside_gauges); door/hood/trunk opening animations dropped (doors are separate nodes)"
+   },
+   "axles": {
+    "x_m": [
+     -1.295,
+     1.575
+    ],
+    "front_axle_x_m": 1.575,
+    "rear_axle_x_m": -1.295,
+    "wheelbase_m": 2.87,
+    "wheel_radius_m": 0.33,
+    "track_outer_m": 1.86,
+    "method": "ground-contact vertices (y < 2.5 cm) of the tyre material, clustered along x; radius = half the tyre height"
+   },
+   "license_verified": "Sketchfab model page + API license field = 'CC Attribution' (checked 2026-10-19)",
+   "file_original": "assets/models/sedan/sedan_mercedes_e_w212.glb"
+  },
+  {
+   "id": "suv_vw_tiguan_2021",
+   "file": "media/p2p/models/suv/suv_vw_tiguan_2021.glb",
+   "category": "suv",
+   "name": "Volkswagen Tiguan 2021",
+   "license": "CC-BY-4.0",
+   "author": "Hyap (source5525)",
+   "attribution": "\"VW Tiguan 2021\" (https://sketchfab.com/3d-models/vw-tiguan-2021-0a11d748fd8f4b3f9bc879aed8d6d208) by Hyap (source5525) (https://sketchfab.com/source5525), licensed under CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/). Modified: scaled to metres (L 4.51 m), re-oriented, re-centred; window glass split into headlight / taillight lenses; the single wheel material split radially into Rims / Tires_rubber; wheels and black trims decimated (meshopt); textures resized to 1024 px WebP.",
+   "source_url": "https://sketchfab.com/3d-models/vw-tiguan-2021-0a11d748fd8f4b3f9bc879aed8d6d208",
+   "download_url": "https://huggingface.co/datasets/allenai/objaverse/resolve/main/glbs/000-131/0a11d748fd8f4b3f9bc879aed8d6d208.glb",
+   "triangles": 227455,
+   "bbox_m": [
+    4.509,
+    2.122,
+    1.679
+   ],
+   "scale_to_m": 1.0,
+   "forward_axis": "+X",
+   "up_axis": "+Y",
+   "origin": "footprint centre on the ground (x/z centred, min y = 0)",
+   "materials": {
+    "body": [
+     "Car_Paint"
+    ],
+    "glass": [
+     "Glass"
+    ],
+    "tyre": [
+     "Tires_rubber"
+    ],
+    "rim": [
+     "Rims"
+    ],
+    "light_front": [
+     "headlight_glass",
+     "Wight_Light"
+    ],
+    "light_rear": [
+     "taillight_glass",
+     "Red_Light"
+    ],
+    "other": [
+     "Metal_Black",
+     "Plastic",
+     "Silver",
+     "Rubber",
+     "material_0"
+    ]
+   },
+   "animations": [],
+   "preview": "assets/preview/suv_vw_tiguan_2021.png",
+   "notes": "Modern compact crossover with realistic proportions, original VW dimensions (L 4.51 m). Sporty aftermarket wheels / front splitter in the source model; simple interior present. See ego_nx_proxy_vw_tiguan for the same car re-proportioned to the Lexus NX. Brand names, badges and logos visible on the model are trademarks of their owners; the CC licence covers the 3D model only.",
+   "source_transform": {
+    "orig_forward_axis": "+Z",
+    "orig_up_axis": "+Y",
+    "orig_scale_to_m": 1.02459,
+    "processing": "Tires material split by radius (r < 0.70 R -> Rims); Glass split by region (front x>1.5 m & y<0.9 m -> headlight_glass, rear x<-1.75 m & y<1.08 m -> taillight_glass)"
+   },
+   "axles": {
+    "x_m": [
+     -1.356,
+     1.305
+    ],
+    "front_axle_x_m": 1.305,
+    "rear_axle_x_m": -1.356,
+    "wheelbase_m": 2.661,
+    "wheel_radius_m": 0.388,
+    "track_outer_m": 1.885,
+    "method": "ground-contact vertices (y < 2.5 cm) of the tyre material, clustered along x; radius = half the tyre height"
+   },
+   "license_verified": "Sketchfab model page + API license field = 'CC Attribution' (checked 2026-10-19)",
+   "role": "compact crossover (original proportions)",
+   "file_original": "assets/models/suv/suv_vw_tiguan_2021.glb"
+  },
+  {
+   "id": "ego_nx_proxy_vw_tiguan",
+   "file": "media/p2p/models/suv/ego_nx_proxy_vw_tiguan.glb",
+   "category": "suv",
+   "name": "VW Tiguan 2021 re-proportioned to Lexus NX (AZ20) dimensions - ego proxy",
+   "license": "CC-BY-4.0",
+   "author": "Hyap (source5525)",
+   "attribution": "\"VW Tiguan 2021\" (https://sketchfab.com/3d-models/vw-tiguan-2021-0a11d748fd8f4b3f9bc879aed8d6d208) by Hyap (source5525) (https://sketchfab.com/source5525), licensed under CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/). Modified: scaled/re-oriented/re-centred as suv_vw_tiguan_2021, then re-proportioned to the Lexus NX 350h/450h+ (AZ20) footprint: wheelbase zone x1.0086 (2.667 -> 2.69 m), front/rear overhang zones stretched x1.145 / x1.155 with a smooth 0.15 m blend (wheels stay round), height x0.989 (1.679 -> 1.66 m), width x1.009 (body 1.848 -> 1.865 m); node transforms baked into the meshes; VW emblems (front grille, tailgate) removed (dark emblem discs remain).",
+   "source_url": "https://sketchfab.com/3d-models/vw-tiguan-2021-0a11d748fd8f4b3f9bc879aed8d6d208",
+   "download_url": "https://huggingface.co/datasets/allenai/objaverse/resolve/main/glbs/000-131/0a11d748fd8f4b3f9bc879aed8d6d208.glb",
+   "triangles": 227057,
+   "bbox_m": [
+    4.66,
+    2.142,
+    1.66
+   ],
+   "scale_to_m": 1.0,
+   "forward_axis": "+X",
+   "up_axis": "+Y",
+   "origin": "footprint centre on the ground (x/z centred, min y = 0)",
+   "materials": {
+    "body": [
+     "Car_Paint"
+    ],
+    "glass": [
+     "Glass"
+    ],
+    "tyre": [
+     "Tires_rubber"
+    ],
+    "rim": [
+     "Rims"
+    ],
+    "light_front": [
+     "headlight_glass",
+     "Wight_Light"
+    ],
+    "light_rear": [
+     "taillight_glass",
+     "Red_Light"
+    ],
+    "other": [
+     "Metal_Black",
+     "Plastic",
+     "Silver",
+     "Rubber",
+     "material_0"
+    ]
+   },
+   "animations": [],
+   "preview": "assets/preview/ego_nx_proxy_vw_tiguan.png",
+   "notes": "Recommended ego: no CC0/CC-BY Lexus NX (2nd or 1st gen) or UX is downloadable without a login (checked the Objaverse mirror and Sketchfab). This modern compact crossover has the NX's exact overall dimensions L 4.66 x W 1.865 (body; 2.14 incl. mirrors) x H 1.66 m and wheelbase 2.69 m; the styling is VW, not Lexus (VW badges removed). Separate paint / glass / tyre / rim / head-lamp / tail-lamp materials. Axle positions: see axles (base_link = rear axle centre). Brand names, badges and logos visible on the model are trademarks of their owners; the CC licence covers the 3D model only.",
+   "source_transform": {
+    "orig_forward_axis": "+Z",
+    "orig_up_axis": "+Y",
+    "orig_scale_to_m": 1,
+    "processing": "same material split as suv_vw_tiguan_2021 (Rims / Tires_rubber radial split, head/tail-lamp lenses split from Glass) + piecewise-smooth x stretch (tools/ego_proxy.mjs); Silver triangles in the front-grille and tailgate badge regions split off and deleted (de-badged)"
+   },
+   "axles": {
+    "x_m": [
+     -1.369,
+     1.315
+    ],
+    "front_axle_x_m": 1.315,
+    "rear_axle_x_m": -1.369,
+    "wheelbase_m": 2.684,
+    "wheel_radius_m": 0.384,
+    "track_outer_m": 1.903,
+    "method": "ground-contact vertices (y < 2.5 cm) of the tyre material, clustered along x; radius = half the tyre height"
+   },
+   "license_verified": "Sketchfab model page + API license field = 'CC Attribution' (checked 2026-10-19)",
+   "role": "ego (recommended; Lexus NX AZ20 proportions)",
+   "file_original": "assets/models/suv/ego_nx_proxy_vw_tiguan.glb"
+  },
+  {
+   "id": "pedestrian_rocketbox_male_adult_08",
+   "file": "media/p2p/models/pedestrian/pedestrian_rocketbox_male_adult_08.glb",
+   "category": "pedestrian",
+   "name": "Rocketbox Male Adult 08 (male, light-blue shirt, dark jeans)",
+   "license": "MIT",
+   "author": "Microsoft Rocketbox Avatar Library (Microsoft Research; avatars by Rocketbox Studios / Markus Wojcik)",
+   "attribution": "Microsoft Rocketbox Avatar Library (https://github.com/microsoft/Microsoft-Rocketbox), Copyright (c) 2020 Microsoft, MIT License. Avatar Assets/Avatars/Adults/Male_Adult_08; animations m_walk_neutral_01 / m_idle_neutral_01 / m_run_neutral_01 (all_animations_max_motextr_*). Converted FBX->glTF (FBX2glTF 0.9.7), textures downsized to 1024 px. Please also cite: Gonzalez-Franco et al., 'The Rocketbox library and the utility of freely available rigged avatars', Frontiers in Virtual Reality 2020.",
+   "source_url": "https://github.com/microsoft/Microsoft-Rocketbox/tree/master/Assets/Avatars/Adults/Male_Adult_08",
+   "download_url": "https://raw.githubusercontent.com/microsoft/Microsoft-Rocketbox/master/Assets/Avatars/Adults/Male_Adult_08/Export/Male_Adult_08.fbx",
+   "triangles": 7364,
+   "bbox_m": [
+    0.339,
+    1.348,
+    1.826
+   ],
+   "scale_to_m": 1.0,
+   "forward_axis": "+X",
+   "up_axis": "+Y",
+   "origin": "footprint centre on the ground (x/z centred, min y = 0)",
+   "materials": {
+    "body": [
+     "m014_body",
+     "m014_head",
+     "m014_opacity"
+    ],
+    "glass": [],
+    "tyre": [],
+    "rim": [],
+    "light_front": [],
+    "light_rear": [],
+    "other": []
+   },
+   "animations": [
+    "walk",
+    "idle",
+    "run"
+   ],
+   "preview": "assets/preview/pedestrian_rocketbox_male_adult_08.png",
+   "notes": "Realistic rigged human (MIT). Textured with colour + normal maps; *_body = clothes, *_head = head/skin, *_opacity = alpha-tested cards (hair, eyelashes) - for a uniform FSD mannequin look recolour all three but keep alphaTest on *_opacity. Skinned mesh: clone with SkeletonUtils.clone() per instance. Facing +X after normalisation (walk forward = +X).",
+   "source_transform": {
+    "orig_forward_axis": "+Z",
+    "orig_up_axis": "+Y",
+    "orig_scale_to_m": 1,
+    "processing": "FBX2glTF conversion of the hipoly avatar (81-bone 3ds Max biped, 'Bip01' skeleton); walk/run clips are the motion-extracted (in-place) versions; root (Bip01) horizontal drift removed, only Bip01 keeps translation, all other joints rotation-only; specular maps dropped"
+   },
+   "license_verified": "GitHub repo LICENSE.md = MIT (README: 'Updated license to MIT', 12/2020); checked 2026-10-19",
+   "clip_info": {
+    "walk": "1.2 s loop, in place, ~1.4 m/s natural speed (move the root yourself)",
+    "run": "0.73-0.77 s loop, in place",
+    "idle": "11.7-15.5 s standing idle"
+   },
+   "file_original": "assets/models/pedestrian/pedestrian_rocketbox_male_adult_08.glb"
+  },
+  {
+   "id": "pedestrian_rocketbox_male_adult_01",
+   "file": "media/p2p/models/pedestrian/pedestrian_rocketbox_male_adult_01.glb",
+   "category": "pedestrian",
+   "name": "Rocketbox Male Adult 01 (male, striped polo, shorts)",
+   "license": "MIT",
+   "author": "Microsoft Rocketbox Avatar Library (Microsoft Research; avatars by Rocketbox Studios / Markus Wojcik)",
+   "attribution": "Microsoft Rocketbox Avatar Library (https://github.com/microsoft/Microsoft-Rocketbox), Copyright (c) 2020 Microsoft, MIT License. Avatar Assets/Avatars/Adults/Male_Adult_01; animations m_walk_neutral_01 / m_idle_neutral_01 / m_run_neutral_01 (all_animations_max_motextr_*). Converted FBX->glTF (FBX2glTF 0.9.7), textures downsized to 1024 px. Please also cite: Gonzalez-Franco et al., 'The Rocketbox library and the utility of freely available rigged avatars', Frontiers in Virtual Reality 2020.",
+   "source_url": "https://github.com/microsoft/Microsoft-Rocketbox/tree/master/Assets/Avatars/Adults/Male_Adult_01",
+   "download_url": "https://raw.githubusercontent.com/microsoft/Microsoft-Rocketbox/master/Assets/Avatars/Adults/Male_Adult_01/Export/Male_Adult_01.fbx",
+   "triangles": 7440,
+   "bbox_m": [
+    0.34,
+    1.348,
+    1.824
+   ],
+   "scale_to_m": 1.0,
+   "forward_axis": "+X",
+   "up_axis": "+Y",
+   "origin": "footprint centre on the ground (x/z centred, min y = 0)",
+   "materials": {
+    "body": [
+     "m002_body",
+     "m002_head",
+     "m002_opacity"
+    ],
+    "glass": [],
+    "tyre": [],
+    "rim": [],
+    "light_front": [],
+    "light_rear": [],
+    "other": []
+   },
+   "animations": [
+    "walk",
+    "idle",
+    "run"
+   ],
+   "preview": "assets/preview/pedestrian_rocketbox_male_adult_01.png",
+   "notes": "Realistic rigged human (MIT). Textured with colour + normal maps; *_body = clothes, *_head = head/skin, *_opacity = alpha-tested cards (hair, eyelashes) - for a uniform FSD mannequin look recolour all three but keep alphaTest on *_opacity. Skinned mesh: clone with SkeletonUtils.clone() per instance. Facing +X after normalisation (walk forward = +X).",
+   "source_transform": {
+    "orig_forward_axis": "+Z",
+    "orig_up_axis": "+Y",
+    "orig_scale_to_m": 1,
+    "processing": "FBX2glTF conversion of the hipoly avatar (81-bone 3ds Max biped, 'Bip01' skeleton); walk/run clips are the motion-extracted (in-place) versions; root (Bip01) horizontal drift removed, only Bip01 keeps translation, all other joints rotation-only; specular maps dropped"
+   },
+   "license_verified": "GitHub repo LICENSE.md = MIT (README: 'Updated license to MIT', 12/2020); checked 2026-10-19",
+   "clip_info": {
+    "walk": "1.2 s loop, in place, ~1.4 m/s natural speed (move the root yourself)",
+    "run": "0.73-0.77 s loop, in place",
+    "idle": "11.7-15.5 s standing idle"
+   },
+   "file_original": "assets/models/pedestrian/pedestrian_rocketbox_male_adult_01.glb"
+  },
+  {
+   "id": "suv_range_rover_sport",
+   "file": "media/p2p/models/suv/suv_range_rover_sport.glb",
+   "category": "suv",
+   "name": "Range Rover Sport (2018)",
+   "license": "CC-BY-4.0",
+   "author": "Weitstern (mini_fish)",
+   "attribution": "\"Range Rover Sport (2018)\" (https://sketchfab.com/3d-models/range-rover-sport-2018-d0820434bec045a2b141a4e1f71d192e) by Weitstern (mini_fish) (https://sketchfab.com/mini_fish), licensed under CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/). Modified: scaled to metres (L 4.88 m), re-centred; lamp glass split into front/rear lenses; licence-plate mesh removed; textures resized to 1024 px WebP.",
+   "source_url": "https://sketchfab.com/3d-models/range-rover-sport-2018-d0820434bec045a2b141a4e1f71d192e",
+   "download_url": "https://huggingface.co/datasets/allenai/objaverse/resolve/main/glbs/000-044/d0820434bec045a2b141a4e1f71d192e.glb",
+   "triangles": 123942,
+   "bbox_m": [
+    4.879,
+    2.042,
+    1.81
+   ],
+   "scale_to_m": 1.0,
+   "forward_axis": "+X",
+   "up_axis": "+Y",
+   "origin": "footprint centre on the ground (x/z centred, min y = 0)",
+   "materials": {
+    "body": [
+     "Main",
+     "Doors",
+     "Tent",
+     "02_-_Default"
+    ],
+    "glass": [
+     "Windows"
+    ],
+    "tyre": [
+     "Tires"
+    ],
+    "rim": [
+     "Disks"
+    ],
+    "light_front": [
+     "headlight_glass"
+    ],
+    "light_rear": [
+     "taillight_glass"
+    ],
+    "other": [
+     "Grid",
+     "Radiator_Light",
+     "Breaks",
+     "Plastic",
+     "Vent",
+     "Bamper",
+     "Land_Rover",
+     "Range_Rover",
+     "Break_Disk",
+     "Tube",
+     "Light_Base",
+     "material",
+     "Radiator_Dark",
+     "Trash",
+     "01_-_Default"
+    ]
+   },
+   "animations": [],
+   "preview": "assets/preview/suv_range_rover_sport.png",
+   "notes": "Full-size premium SUV, textured PBR (paint materials Main / Doors / Tent / 02_-_Default (mirror caps) carry colour textures - replace for uniform paint). Tent = roof + pillars. Brand names, badges and logos visible on the model are trademarks of their owners; the CC licence covers the 3D model only.",
+   "source_transform": {
+    "orig_forward_axis": "+X",
+    "orig_up_axis": "+Y",
+    "orig_scale_to_m": 0.0599159,
+    "processing": "Light_Glass split by x (front -> headlight_glass, rear -> taillight_glass); Number (plates) removed"
+   },
+   "axles": {
+    "x_m": [
+     -1.369,
+     1.598
+    ],
+    "front_axle_x_m": 1.598,
+    "rear_axle_x_m": -1.369,
+    "wheelbase_m": 2.967,
+    "wheel_radius_m": 0.409,
+    "track_outer_m": 1.883,
+    "method": "ground-contact vertices (y < 2.5 cm) of the tyre material, clustered along x; radius = half the tyre height"
+   },
+   "license_verified": "Sketchfab model page + API license field = 'CC Attribution' (checked 2026-10-19)",
+   "file_original": "assets/models/suv/suv_range_rover_sport.glb"
+  },
+  {
+   "id": "pickup_generic_doublecab",
+   "file": "media/p2p/models/pickup/pickup_generic_doublecab.glb",
+   "category": "pickup",
+   "name": "Generic double-cab pickup (Hilux-like)",
+   "license": "CC-BY-4.0",
+   "author": "matisosanimation",
+   "attribution": "\"Hilux-like pick-up truck\" (https://sketchfab.com/3d-models/hilux-like-pick-up-truck-501c2fa5bd1a4ecd822365fa7daa8019) by matisosanimation (https://sketchfab.com/matisosanimation), licensed under CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/). Modified: scaled to metres (L 5.30 m), re-oriented, re-centred, materials renamed.",
+   "source_url": "https://sketchfab.com/3d-models/hilux-like-pick-up-truck-501c2fa5bd1a4ecd822365fa7daa8019",
+   "download_url": "https://huggingface.co/datasets/allenai/objaverse/resolve/main/glbs/000-079/501c2fa5bd1a4ecd822365fa7daa8019.glb",
+   "triangles": 54902,
+   "bbox_m": [
+    5.3,
+    2.256,
+    1.838
+   ],
+   "scale_to_m": 1.0,
+   "forward_axis": "+X",
+   "up_axis": "+Y",
+   "origin": "footprint centre on the ground (x/z centred, min y = 0)",
+   "materials": {
+    "body": [
+     "body_paint"
+    ],
+    "glass": [
+     "window_glass"
+    ],
+    "tyre": [
+     "tyres"
+    ],
+    "rim": [
+     "rims"
+    ],
+    "light_front": [
+     "headlight_glass"
+    ],
+    "light_rear": [
+     "taillight_glass"
+    ],
+    "other": [
+     "blinn3SG",
+     "blinn8SG",
+     "blinn9SG",
+     "grille",
+     "indicator_glass",
+     "lambert18SG",
+     "lambert25SG",
+     "lambert27SG",
+     "lambert28SG",
+     "lambert29SG",
+     "lambert30SG",
+     "lambert31SG",
+     "mirrors_handles",
+     "rear_bumper"
+    ]
+   },
+   "animations": [],
+   "preview": "assets/preview/pickup_generic_doublecab.png",
+   "notes": "Trademark-free generic mid-size pickup (open bed), 55k tris, untextured. Slightly softer detail than the Gladiator.",
+   "source_transform": {
+    "orig_forward_axis": "-X",
+    "orig_up_axis": "+Y",
+    "orig_scale_to_m": 0.891823,
+    "processing": "Maya material names renamed (blinn2SG->body_paint, lambert23SG->tyres, blinn4SG->rims, lambert21SG->window_glass, blinn7SG->headlight_glass, blinn5SG->taillight_glass, ...)"
+   },
+   "axles": {
+    "x_m": [
+     -1.421,
+     1.842
+    ],
+    "front_axle_x_m": 1.842,
+    "rear_axle_x_m": -1.421,
+    "wheelbase_m": 3.263,
+    "wheel_radius_m": 0.362,
+    "track_outer_m": 2.161,
+    "method": "ground-contact vertices (y < 2.5 cm) of the tyre material, clustered along x; radius = half the tyre height"
+   },
+   "license_verified": "Sketchfab model page + API license field = 'CC Attribution' (checked 2026-10-19)",
+   "variant_of": "pickup",
+   "file_original": "assets/models/pickup/pickup_generic_doublecab.glb"
+  },
+  {
+   "id": "van_mercedes_sprinter",
+   "file": "media/p2p/models/van/van_mercedes_sprinter.glb",
+   "category": "van",
+   "name": "Mercedes-Benz Sprinter (panel van, high roof)",
+   "license": "CC-BY-4.0",
+   "author": "Savelliy 07 (savelliy07)",
+   "attribution": "\"Mercedes-Benz Sprinter\" (https://sketchfab.com/3d-models/mercedes-benz-sprinter-152f62800be34652af0545487129ca2e) by Savelliy 07 (savelliy07) (https://sketchfab.com/savelliy07), licensed under CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/). Modified: scaled to metres (L 5.93 m), re-oriented, re-centred; generic SketchUp colour materials renamed and given PBR values (paint, trim, rim, tyre, lamps, glass).",
+   "source_url": "https://sketchfab.com/3d-models/mercedes-benz-sprinter-152f62800be34652af0545487129ca2e",
+   "download_url": "https://huggingface.co/datasets/allenai/objaverse/resolve/main/glbs/000-029/152f62800be34652af0545487129ca2e.glb",
+   "triangles": 96006,
+   "bbox_m": [
+    5.932,
+    2.432,
+    2.578
+   ],
+   "scale_to_m": 1.0,
+   "forward_axis": "+X",
+   "up_axis": "+Y",
+   "origin": "footprint centre on the ground (x/z centred, min y = 0)",
+   "materials": {
+    "body": [
+     "body_paint"
+    ],
+    "glass": [
+     "window_glass"
+    ],
+    "tyre": [
+     "tyre"
+    ],
+    "rim": [
+     "rim"
+    ],
+    "light_front": [
+     "headlight_glass"
+    ],
+    "light_rear": [
+     "taillight",
+     "rear_marker_lights"
+    ],
+    "other": [
+     "Color_000",
+     "Color_002",
+     "Color_004",
+     "Color_007",
+     "Color_A01",
+     "Color_A07",
+     "Color_A11",
+     "Color_A13",
+     "Color_A18",
+     "Color_B01",
+     "Color_B04",
+     "Color_C12",
+     "Color_F19",
+     "FrontColor",
+     "black_trim",
+     "material"
+    ]
+   },
+   "animations": [],
+   "preview": "assets/preview/van_mercedes_sprinter.png",
+   "notes": "Large delivery / panel van. Source uses SketchUp default colour names (likely modelled in SketchUp); uploader-declared CC-BY. Brand names, badges and logos visible on the model are trademarks of their owners; the CC licence covers the 3D model only.",
+   "source_transform": {
+    "orig_forward_axis": "+Z",
+    "orig_up_axis": "+Y",
+    "orig_scale_to_m": 0.0239938,
+    "processing": "Color_A01_1->body_paint, Color_A10->black_trim, Color_A25->rim, Color_B02->tyre, Color_A23->taillight, Translucent_Glass_Gray->headlight_glass, Translucent_Glass_Gray_2->rear_marker_lights, Material/Material.00x/Translucent_Glass_Gray_1->window_glass"
+   },
+   "axles": {
+    "x_m": [
+     -1.738,
+     1.944
+    ],
+    "front_axle_x_m": 1.944,
+    "rear_axle_x_m": -1.738,
+    "wheelbase_m": 3.682,
+    "wheel_radius_m": 0.366,
+    "track_outer_m": 1.912,
+    "method": "ground-contact vertices (y < 2.5 cm) of the tyre material, clustered along x; radius = half the tyre height"
+   },
+   "license_verified": "Sketchfab model page + API license field = 'CC Attribution' (checked 2026-10-19)",
+   "file_original": "assets/models/van/van_mercedes_sprinter.glb"
+  },
+  {
+   "id": "van_mpv_citroen_c3_picasso",
+   "file": "media/p2p/models/van/van_mpv_citroen_c3_picasso.glb",
+   "category": "van",
+   "name": "Citroen C3 Picasso (compact MPV)",
+   "license": "CC-BY-4.0",
+   "author": "ziedarchi (ziedjemai83)",
+   "attribution": "\"Citroen PICASSO  3D model\" (https://sketchfab.com/3d-models/citroen-picasso-3d-model-2fbf653e4e6c438b95a290928137cf9d) by ziedarchi (ziedjemai83) (https://sketchfab.com/ziedjemai83), licensed under CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/). Modified: scaled to metres (L 4.08 m), re-oriented, re-centred, materials renamed, licence plates removed, gold rims / roof rails recoloured silver, textures resized.",
+   "source_url": "https://sketchfab.com/3d-models/citroen-picasso-3d-model-2fbf653e4e6c438b95a290928137cf9d",
+   "download_url": "https://huggingface.co/datasets/allenai/objaverse/resolve/main/glbs/000-004/2fbf653e4e6c438b95a290928137cf9d.glb",
+   "triangles": 130206,
+   "bbox_m": [
+    4.08,
+    2.085,
+    1.802
+   ],
+   "scale_to_m": 1.0,
+   "forward_axis": "+X",
+   "up_axis": "+Y",
+   "origin": "footprint centre on the ground (x/z centred, min y = 0)",
+   "materials": {
+    "body": [
+     "body_paint"
+    ],
+    "glass": [
+     "window_glass"
+    ],
+    "tyre": [
+     "tyres"
+    ],
+    "rim": [
+     "rims"
+    ],
+    "light_front": [
+     "headlight_glass"
+    ],
+    "light_rear": [
+     "taillight_glass"
+    ],
+    "other": [
+     "wheel_inner_black",
+     "black_trim",
+     "rubber",
+     "HL_mirror",
+     "HL_mirror1",
+     "HL_mirror2",
+     "bevel",
+     "Light",
+     "roof_rails_handles"
+    ]
+   },
+   "animations": [],
+   "preview": "assets/preview/van_mpv_citroen_c3_picasso.png",
+   "notes": "Compact European MPV used as the 'minivan' variant (no good CC-BY full-size US minivan - Sienna/Odyssey/Pacifica - was found). wheel_inner_black = dark inner wheel faces. Brand names, badges and logos visible on the model are trademarks of their owners; the CC licence covers the 3D model only.",
+   "source_transform": {
+    "orig_forward_axis": "-X",
+    "orig_up_axis": "+Y",
+    "orig_scale_to_m": 0.00106109,
+    "processing": "Default->body_paint, material->headlight_glass, HL_rear->taillight_glass, wheels->rims, tires->tyres, glass->window_glass"
+   },
+   "axles": {
+    "x_m": [
+     -1.424,
+     1.311
+    ],
+    "front_axle_x_m": 1.311,
+    "rear_axle_x_m": -1.424,
+    "wheelbase_m": 2.735,
+    "wheel_radius_m": 0.328,
+    "track_outer_m": 1.775,
+    "method": "ground-contact vertices (y < 2.5 cm) of the tyre material, clustered along x; radius = half the tyre height"
+   },
+   "license_verified": "Sketchfab model page + API license field = 'CC Attribution' (checked 2026-10-19)",
+   "variant_of": "minivan / MPV",
+   "file_original": "assets/models/van/van_mpv_citroen_c3_picasso.glb"
+  },
+  {
+   "id": "truck_box_isuzu_ffr",
+   "file": "media/p2p/models/truck/truck_box_isuzu_ffr.glb",
+   "category": "truck",
+   "name": "Isuzu FFR / F-series box truck",
+   "license": "CC-BY-4.0",
+   "author": "mekanismo",
+   "attribution": "\"Isuzu FFR\" (https://sketchfab.com/3d-models/isuzu-ffr-29931659dfe84909a226a625cf5a8f75) by mekanismo (https://sketchfab.com/mekanismo), licensed under CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/). Modified: scaled to metres (L 8.0 m), re-oriented, re-centred; the source is a cab-chassis - a box body (6.2 x 2.48 x 2.34 m), rear doors, rear underride bar, tail lamps and marker lamps were ADDED as simple rounded-box meshes; materials renamed.",
+   "source_url": "https://sketchfab.com/3d-models/isuzu-ffr-29931659dfe84909a226a625cf5a8f75",
+   "download_url": "https://huggingface.co/datasets/allenai/objaverse/resolve/main/glbs/000-112/29931659dfe84909a226a625cf5a8f75.glb",
+   "triangles": 131237,
+   "bbox_m": [
+    8,
+    2.842,
+    3.4
+   ],
+   "scale_to_m": 1.0,
+   "forward_axis": "+X",
+   "up_axis": "+Y",
+   "origin": "footprint centre on the ground (x/z centred, min y = 0)",
+   "materials": {
+    "body": [
+     "cab_paint",
+     "box_body",
+     "box_door"
+    ],
+    "glass": [
+     "window_glass"
+    ],
+    "tyre": [
+     "tyre"
+    ],
+    "rim": [
+     "rim"
+    ],
+    "light_front": [
+     "headlight_glass"
+    ],
+    "light_rear": [
+     "taillight"
+    ],
+    "other": [
+     "black_trim",
+     "chrome",
+     "interior",
+     "mattemetal",
+     "subframe",
+     "box_sill",
+     "box_hardware",
+     "marker_amber",
+     "indicator_glass",
+     "mirror",
+     "blue"
+    ]
+   },
+   "animations": [],
+   "preview": "assets/preview/truck_box_isuzu_ffr.png",
+   "notes": "Medium-duty box truck (cab = detailed Isuzu FFR model; box = procedural, smooth rounded box). Twin rear wheels. Brand names, badges and logos visible on the model are trademarks of their owners; the CC licence covers the 3D model only.",
+   "source_transform": {
+    "orig_forward_axis": "+Z",
+    "orig_up_axis": "+Y",
+    "orig_scale_to_m": 1,
+    "processing": "added nodes under 'added_parts' (box_body, rear_door_l/r, door_lockbar_*, subframe_l/r, rear_underride_*, taillight_l/r, marker_*); Cube_LicPlate removed"
+   },
+   "axles": {
+    "x_m": [
+     -1.658,
+     2.897
+    ],
+    "front_axle_x_m": 2.897,
+    "rear_axle_x_m": -1.658,
+    "wheelbase_m": 4.555,
+    "wheel_radius_m": 0.398,
+    "track_outer_m": 2.161,
+    "method": "ground-contact vertices (y < 2.5 cm) of the tyre material, clustered along x; radius = half the tyre height"
+   },
+   "license_verified": "Sketchfab model page + API license field = 'CC Attribution' (checked 2026-10-19)",
+   "variant_of": "box truck",
+   "file_original": "assets/models/truck/truck_box_isuzu_ffr.glb"
+  },
+  {
+   "id": "bus_marcopolo_torino",
+   "file": "media/p2p/models/bus/bus_marcopolo_torino.glb",
+   "category": "bus",
+   "name": "Marcopolo Torino city bus (VW 17.230 chassis)",
+   "license": "CC-BY-4.0",
+   "author": "FrankFkN (frankfkn)",
+   "attribution": "\"Marcopolo Torino VW17-230\" (https://sketchfab.com/3d-models/marcopolo-torino-vw17-230-dbb5b344102a493185d748f1e9be9bf8) by FrankFkN (frankfkn) (https://sketchfab.com/frankfkn), licensed under CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/). Modified: re-oriented, re-centred (already metres, L 12.49 m); interior (seats, panels, steering wheel, floor, handrails) removed; chassis / body-trim meshes decimated; lamp atlas split into front / rear; textures resized to 1024 px WebP.",
+   "source_url": "https://sketchfab.com/3d-models/marcopolo-torino-vw17-230-dbb5b344102a493185d748f1e9be9bf8",
+   "download_url": "https://huggingface.co/datasets/allenai/objaverse/resolve/main/glbs/000-018/dbb5b344102a493185d748f1e9be9bf8.glb",
+   "triangles": 131976,
+   "bbox_m": [
+    12.486,
+    2.933,
+    3.459
+   ],
+   "scale_to_m": 1.0,
+   "forward_axis": "+X",
+   "up_axis": "+Y",
+   "origin": "footprint centre on the ground (x/z centred, min y = 0)",
+   "materials": {
+    "body": [
+     "fkn_tori_volks"
+    ],
+    "glass": [
+     "fkn_tori_volks_vd__trans"
+    ],
+    "tyre": [
+     "hankookx512"
+    ],
+    "rim": [
+     "volksbus17_230"
+    ],
+    "light_front": [
+     "lamps_front"
+    ],
+    "light_rear": [
+     "lamps_rear",
+     "lamp_lenses_rear"
+    ],
+    "other": [
+     "17_230",
+     "Matte__FFCCCCCC",
+     "Matte__FFFFFFFF",
+     "branco",
+     "fkn_adsv_alpha",
+     "fkn_aluminio",
+     "fkn_caixcob",
+     "fkn_chassi_v",
+     "fkn_ferros_conj",
+     "fkn_grades_marc2",
+     "fkn_internos1",
+     "fkn_itinerario",
+     "fkn_itinerario_x2",
+     "fkn_mano_vw",
+     "fkn_marc",
+     "fkn_mt_1",
+     "fkn_tori_lp",
+     "fkn_tori_lp2",
+     "fkn_tori_lp2__trans",
+     "fkn_tori_retrovisores",
+     "fkn_txd1",
+     "fkn_volks_e3",
+     "material",
+     "preto",
+     "reflexion2",
+     "reflexion3",
+     "volksbusx2",
+     "vwe5",
+     "vwe5n"
+    ]
+   },
+   "animations": [],
+   "preview": "assets/preview/bus_marcopolo_torino.png",
+   "notes": "Brazilian 12 m low-entry city bus with textured livery; fkn_tori_volks = whole painted body (livery texture) - replace for uniform paint. volksbus17_230 = wheels + chassis parts. Windows are semi-transparent (interior removed -> render them dark/opaque). Brand names, badges and logos visible on the model are trademarks of their owners; the CC licence covers the 3D model only.",
+   "source_transform": {
+    "orig_forward_axis": "-Z",
+    "orig_up_axis": "+Y",
+    "orig_scale_to_m": 1,
+    "processing": "dropped fkn_bancos, fkn_int1, fkn_tori07_int1*, fkn_cadeirante, fkn_int2*, fkn_couro_cl, vw_volante, fkn_piso_tori_op2, fkn_ferbor, shadow, matrix_l__trans; fkn_tori_lp / fkn_tori_lp2 split by x"
+   },
+   "axles": {
+    "x_m": [
+     -2.198,
+     3.689
+    ],
+    "front_axle_x_m": 3.689,
+    "rear_axle_x_m": -2.198,
+    "wheelbase_m": 5.887,
+    "wheel_radius_m": 0.51,
+    "track_outer_m": 2.365,
+    "method": "ground-contact vertices (y < 2.5 cm) of the tyre material, clustered along x; radius = half the tyre height"
+   },
+   "license_verified": "Sketchfab model page + API license field = 'CC Attribution' (checked 2026-10-19)",
+   "file_original": "assets/models/bus/bus_marcopolo_torino.glb"
+  },
+  {
+   "id": "bicycle_road_btwin_triban",
+   "file": "media/p2p/models/bicycle/bicycle_road_btwin_triban.glb",
+   "category": "bicycle",
+   "name": "B'Twin Triban 100 road bike",
+   "license": "CC-BY-4.0",
+   "author": "Tomaso (Tomasoo)",
+   "attribution": "\"B\u2019Twin Triban 100 Road Bike\" (https://sketchfab.com/3d-models/btwin-triban-100-road-bike-1443433035054564801ca9098c7e6e9f) by Tomaso (Tomasoo) (https://sketchfab.com/Tomasoo), licensed under CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/). Modified: scaled to metres (L 1.75 m), re-centred; fork/handlebar/drivetrain mesh decimated 160k -> 48k tris (meshopt); materials renamed; textures resized to 1024 px WebP.",
+   "source_url": "https://sketchfab.com/3d-models/btwin-triban-100-road-bike-1443433035054564801ca9098c7e6e9f",
+   "download_url": "https://huggingface.co/datasets/allenai/objaverse/resolve/main/glbs/000-002/1443433035054564801ca9098c7e6e9f.glb",
+   "triangles": 166332,
+   "bbox_m": [
+    1.75,
+    0.419,
+    1.016
+   ],
+   "scale_to_m": 1.0,
+   "forward_axis": "+X",
+   "up_axis": "+Y",
+   "origin": "footprint centre on the ground (x/z centred, min y = 0)",
+   "materials": {
+    "body": [
+     "frame_paint"
+    ],
+    "glass": [],
+    "tyre": [
+     "wheel_front",
+     "wheel_rear"
+    ],
+    "rim": [],
+    "light_front": [],
+    "light_rear": [],
+    "other": [
+     "fork_bars_drivetrain",
+     "crankset_pedals",
+     "saddle"
+    ]
+   },
+   "animations": [],
+   "preview": "assets/preview/bicycle_road_btwin_triban.png",
+   "notes": "Realistic road bike with real spokes. wheel_front / wheel_rear are complete wheels (tyre+rim+spokes) - a dark override looks fine. No rider. Brand names, badges and logos visible on the model are trademarks of their owners; the CC licence covers the 3D model only.",
+   "source_transform": {
+    "orig_forward_axis": "+X",
+    "orig_up_axis": "+Y",
+    "orig_scale_to_m": 0.00730348,
+    "processing": "Material.002->frame_paint, Material.011->wheel_front, Material.010->wheel_rear (each = tyre + rim + spokes, textured), Material.001->crankset_pedals, Material.007->fork_bars_drivetrain, material_0->saddle"
+   },
+   "axles": {
+    "x_m": [
+     -0.521,
+     0.521
+    ],
+    "front_axle_x_m": 0.521,
+    "rear_axle_x_m": -0.521,
+    "wheelbase_m": 1.042,
+    "wheel_radius_m": 0.354,
+    "track_outer_m": 0.08,
+    "method": "ground-contact vertices (y < 2.5 cm) of the tyre material, clustered along x; radius = half the tyre height"
+   },
+   "license_verified": "Sketchfab model page + API license field = 'CC Attribution' (checked 2026-10-19)"
+  }
+ ]
+}

@@ -1,0 +1,158 @@
+[
+ {
+  "id": "turn-truck",
+  "title": "Right turn, bus on the cross street",
+  "desc": "A 12.5 m bus drives along the street the ego turns into.",
+  "det": "spn",
+  "codes": {
+   "none": "c",
+   "gt_vis": "s",
+   "det_spn_dt": "c",
+   "det_spn_r2r": "s",
+   "det_s4d_dt": "c",
+   "det_s4d_r2r": "s",
+   "det_t4_dt": "s",
+   "det_t4_r2r": "s"
+  },
+  "tc": {
+   "none": 11.5,
+   "gt_vis": null,
+   "det_spn_dt": 11.6,
+   "det_spn_r2r": null,
+   "det_s4d_dt": 11.9,
+   "det_s4d_r2r": null,
+   "det_t4_dt": null,
+   "det_t4_r2r": null
+  }
+ },
+ {
+  "id": "slow-lead",
+  "title": "Slow car ahead",
+  "desc": "The car ahead in the lane creeps along at walking pace.",
+  "det": "spn",
+  "codes": {
+   "none": "c",
+   "gt_vis": "s",
+   "det_spn_dt": "c",
+   "det_spn_r2r": "s",
+   "det_s4d_dt": "c",
+   "det_s4d_r2r": "s",
+   "det_t4_dt": "c",
+   "det_t4_r2r": "s"
+  },
+  "tc": {
+   "none": 4.5,
+   "gt_vis": null,
+   "det_spn_dt": 4.7,
+   "det_spn_r2r": null,
+   "det_s4d_dt": 5.2,
+   "det_s4d_r2r": null,
+   "det_t4_dt": 7.2,
+   "det_t4_r2r": null
+  }
+ },
+ {
+  "id": "cyclist-junction",
+  "title": "Cyclist crossing the junction",
+  "desc": "A cyclist crosses the junction ahead of the ego from the left.",
+  "det": "spn",
+  "codes": {
+   "none": "c",
+   "gt_vis": "s",
+   "det_spn_dt": "c",
+   "det_spn_r2r": "s",
+   "det_s4d_dt": "c",
+   "det_s4d_r2r": "s",
+   "det_t4_dt": "s",
+   "det_t4_r2r": "s"
+  },
+  "tc": {
+   "none": 5.5,
+   "gt_vis": null,
+   "det_spn_dt": 5.8,
+   "det_spn_r2r": null,
+   "det_s4d_dt": 10.5,
+   "det_s4d_r2r": null,
+   "det_t4_dt": null,
+   "det_t4_r2r": null
+  }
+ },
+ {
+  "id": "parked-turn",
+  "title": "Parked vehicle after a right turn",
+  "desc": "A 6.9 m vehicle is parked just after the corner of a right turn.",
+  "det": "spn",
+  "codes": {
+   "none": "c",
+   "gt_vis": "s",
+   "det_spn_dt": "c",
+   "det_spn_r2r": "s",
+   "det_s4d_dt": "c",
+   "det_s4d_r2r": "s",
+   "det_t4_dt": "s",
+   "det_t4_r2r": "s"
+  },
+  "tc": {
+   "none": 7.2,
+   "gt_vis": null,
+   "det_spn_dt": 7.2,
+   "det_spn_r2r": null,
+   "det_s4d_dt": 7.2,
+   "det_s4d_r2r": null,
+   "det_t4_dt": null,
+   "det_t4_r2r": null
+  }
+ },
+ {
+  "id": "long-street",
+  "title": "The street of the opening",
+  "desc": "Sixteen seconds along the downtown street of the opening twin; a slow vehicle at the right curb 13 s in.",
+  "det": "spn",
+  "codes": {
+   "none": "c",
+   "gt_vis": "s",
+   "det_spn_dt": "c",
+   "det_spn_r2r": "s",
+   "det_s4d_dt": "c",
+   "det_s4d_r2r": "s",
+   "det_t4_dt": "s",
+   "det_t4_r2r": "s"
+  },
+  "tc": {
+   "none": 4.2,
+   "gt_vis": null,
+   "det_spn_dt": 13.1,
+   "det_spn_r2r": null,
+   "det_s4d_dt": 14.5,
+   "det_s4d_r2r": null,
+   "det_t4_dt": null,
+   "det_t4_r2r": null
+  }
+ },
+ {
+  "id": "junction-cross",
+  "title": "Bus crossing, 15 s in",
+  "desc": "A 10.5 m bus crosses the far junction after 15 s of driving.",
+  "det": "spn",
+  "codes": {
+   "none": "c",
+   "gt_vis": "s",
+   "det_spn_dt": "c",
+   "det_spn_r2r": "s",
+   "det_s4d_dt": "c",
+   "det_s4d_r2r": "s",
+   "det_t4_dt": "s",
+   "det_t4_r2r": "s"
+  },
+  "tc": {
+   "none": 15.8,
+   "gt_vis": null,
+   "det_spn_dt": 15.8,
+   "det_spn_r2r": null,
+   "det_s4d_dt": 15.9,
+   "det_s4d_r2r": null,
+   "det_t4_dt": null,
+   "det_t4_r2r": null
+  }
+ }
+]

@@ -1,0 +1,1766 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>R2R: Released-to-Real</title>
+<meta name="description" content="Beyond the Benchmark: Localizing Released Autonomous Driving Models to Real Vehicles.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #050608;
+  --panel: #101318;
+  --panel-2: #161a21;
+  --line: rgba(255,255,255,0.10);
+  --text: #f4f6f8;
+  --muted: rgba(244,246,248,0.72);
+  --faint: rgba(244,246,248,0.45);
+  --teal: #2dd4bf;          
+  --teal-2: #5eead4;
+  --violet: #a78bfa;        
+  --violet-2: #c4b5fd;
+  --red: #f87171;
+  --amber: #fbbf24;
+  --grad: linear-gradient(120deg, var(--teal), #7dd3fc, var(--violet), var(--teal));
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html { scroll-behavior: auto; }
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+  background: var(--bg); color: var(--text); overflow-x: hidden;
+  min-height: 100vh; min-height: 100dvh; -webkit-font-smoothing: antialiased;
+}
+a { color: inherit; }
+.mono { font-family: 'JetBrains Mono', ui-monospace, monospace; }
+
+
+.loading-screen {
+  position: fixed; inset: 0; background: var(--bg); display: flex; flex-direction: column;
+  align-items: center; justify-content: center; z-index: 9999; transition: opacity .8s ease;
+}
+.loading-screen.hidden { opacity: 0; pointer-events: none; }
+.loading-brand { font-size: 3.2rem; font-weight: 800; letter-spacing: 2px; margin-bottom: .4rem;
+  background: var(--grad); background-size: 300% 100%; -webkit-background-clip: text; background-clip: text;
+  -webkit-text-fill-color: transparent; animation: gradientShift 4s ease infinite; }
+.loading-text { font-size: .95rem; color: var(--muted); margin-bottom: 2rem; letter-spacing: 3px; text-transform: uppercase; }
+.loading-spinner { width: 60px; height: 60px; position: relative; }
+.spinner-ring { position: absolute; inset: 0; border: 3px solid transparent; border-top-color: var(--teal); border-radius: 50%;
+  animation: spin 1.5s cubic-bezier(.68,-.55,.265,1.55) infinite; }
+.spinner-ring:nth-child(2) { border-top-color: #7dd3fc; animation-duration: 2s; animation-delay: -.3s; }
+.spinner-ring:nth-child(3) { border-top-color: var(--violet); animation-duration: 2.5s; animation-delay: -.6s; }
+.loading-bar { width: 220px; height: 2px; background: rgba(255,255,255,.08); margin-top: 2rem; border-radius: 2px; overflow: hidden; }
+.loading-bar > div { height: 100%; width: 0; background: var(--grad); background-size: 300% 100%; transition: width .2s ease; }
+@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes gradientShift { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
+
+
+.background-canvas { position: fixed; inset: 0; z-index: -1; width: 100vw; height: 100vh; height: 100dvh; }
+.content { position: relative; z-index: 1; height: 672vh; }
+.kicker { font-size: .85rem; letter-spacing: 3px; text-transform: uppercase; color: var(--teal-2); margin-bottom: 1rem; text-shadow: 0 0 18px rgba(45,212,191,.6); }
+.main-title + .main-title { margin-top: -.85rem; }
+.main-title .sc { color: var(--teal-2); text-shadow: 0 0 14px rgba(45,212,191,.9); }
+#title-section { opacity: 1; }
+#title-split { left: 3rem; right: auto; top: auto; bottom: 9%; transform: none; text-align: left; }
+#title-split .main-title { font-size: clamp(1.8rem, 3vw, 2.8rem); }
+#title-split .subtitle { max-width: 30rem; }
+.world-chip { position: fixed; left: 3rem; top: 6.2rem; z-index: 4; display: flex; align-items: center; gap: .7rem; font-size: .8rem; letter-spacing: 2px;
+  padding: .45rem .9rem; border-radius: 6px; background: rgba(0,0,0,.45); border: 1px solid rgba(255,255,255,.14); backdrop-filter: blur(8px); opacity: 0; pointer-events: none; }
+.world-chip .wdot { width: 9px; height: 9px; border-radius: 50%; background: #fbbf24; box-shadow: 0 0 10px #fbbf24; }
+.world-chip.sim .wdot { background: var(--teal); box-shadow: 0 0 10px var(--teal); }
+.world-chip.loop .wdot { background: #ff4d5e; box-shadow: 0 0 10px #ff4d5e; }
+.world-chip .wsub { color: rgba(255,255,255,.55); letter-spacing: 1px; text-transform: none; }
+.scanlines { position: fixed; inset: 0; z-index: 1; pointer-events: none; opacity: 0;
+  background: repeating-linear-gradient(to bottom, rgba(255,255,255,.035) 0 1px, transparent 1px 3px); mix-blend-mode: overlay; }
+.loading-screen canvas { position: absolute; inset: 0; width: 100%; height: 100%; opacity: .55; }
+.loading-screen > div { position: relative; }
+@media (max-width: 768px) {
+  .world-chip { left: 1.2rem; top: 7.4rem; font-size: .66rem; } .world-chip .wsub { display: none; }
+  #title-split { left: 1.2rem; right: auto; bottom: 14%; top: auto; }
+  #title-split .main-title { font-size: 1.7rem; }
+  .kicker { font-size: .68rem; }
+}
+
+.dark-overlay { position: fixed; inset: 0; height: 100vh; height: 100dvh; background: rgba(0,0,0,.42); opacity: 0; z-index: 1; pointer-events: none; }
+.vignette { position: fixed; inset: 0; z-index: 1; pointer-events: none;
+  background: radial-gradient(ellipse at center, transparent 55%, rgba(0,0,0,.55) 100%); }
+.top-gradient { position: fixed; top: 0; left: 0; width: 100%; height: 150px; z-index: 5; pointer-events: none;
+  background: linear-gradient(to bottom, rgba(0,0,0,.8) 0%, rgba(0,0,0,.4) 50%, transparent 100%); }
+.header-bar { position: fixed; top: 0; left: 0; right: 0; height: 84px; z-index: 6; pointer-events: none; opacity: 0;
+  background: rgba(5,6,8,.78); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-bottom: 1px solid var(--line); transition: opacity .35s ease; }
+body.past-hero .header-bar { opacity: 1; }
+.header-title { position: fixed; top: 2rem; font-size: 1.15rem; font-weight: 500; letter-spacing: 1px; z-index: 10; }
+.header-left { left: 3rem; font-weight: 800; letter-spacing: 2px; }
+.header-left span { background: var(--grad); background-size: 300% 100%; -webkit-background-clip: text; background-clip: text;
+  -webkit-text-fill-color: transparent; animation: gradientShift 4s ease infinite; }
+.nav-buttons { position: fixed; top: 2rem; left: 50%; transform: translateX(-50%); display: flex; gap: 1rem; z-index: 10; }
+.nav-btn { padding: .6rem 1.4rem; background: transparent; border: none; color: #fff; font-size: .9rem; letter-spacing: .5px;
+  cursor: pointer; text-decoration: none; position: relative; transition: color .3s ease; font-family: inherit; }
+.nav-btn::after { content: ''; position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); width: 0; height: 3px;
+  background: var(--grad); background-size: 300% 100%; transition: width .3s ease; }
+.nav-btn:hover::after, .nav-btn.active::after { width: 100%; }
+.nav-btn.disabled { color: var(--faint); cursor: default; }
+.nav-btn { white-space: nowrap; } .nav-btn .nav-sm { display: none; }
+@media (max-width: 1240px) { .nav-btn { padding: .6rem .9rem; } .nav-buttons { gap: .3rem; } }
+.nav-btn.disabled:hover::after { width: 0; }
+
+.title-section { position: fixed; top: 50%; left: 7%; transform: translateY(-50%); opacity: 0; z-index: 2; display: flex; align-items: flex-start; pointer-events: none; }
+.vertical-bar { width: 10px; height: 9.6rem; margin-right: 2rem; background: linear-gradient(to bottom, var(--teal), var(--violet)); border-radius: 2px; }
+.title-content { display: flex; flex-direction: column; }
+.main-title { font-size: 4rem; font-weight: 600; letter-spacing: .5px; margin-bottom: 1rem; line-height: 1.12; text-shadow: 0 2px 24px rgba(0,0,0,.45); }
+#title-section-2 .main-title { font-size: 3.3rem; }
+.title-section::before { content: ''; position: absolute; left: -12vw; top: -40%; width: 70vw; height: 180%; z-index: -1; pointer-events: none;
+  background: radial-gradient(ellipse at 30% 50%, rgba(0,0,0,.55) 0%, rgba(0,0,0,.25) 45%, transparent 70%); }
+.subtitle { font-size: 1.55rem; font-weight: 300; letter-spacing: .3px; opacity: .92; text-shadow: 0 2px 18px rgba(0,0,0,.5); }
+
+.hud { position: fixed; left: 3rem; bottom: 2.2rem; z-index: 3; font-size: .78rem; letter-spacing: 1.5px; color: rgba(255,255,255,.82);
+  display: flex; align-items: center; gap: .8rem; opacity: 0; text-transform: uppercase; pointer-events: none; }
+.hud .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--red); box-shadow: 0 0 10px var(--red); animation: blink 1.4s ease infinite; }
+@keyframes blink { 50% { opacity: .25; } }
+.scroll-rail { position: fixed; right: 2.2rem; top: 50%; transform: translateY(-50%); height: 36vh; width: 2px; background: rgba(255,255,255,.15); z-index: 3; opacity: 0; border-radius: 2px; }
+.scroll-rail > div { width: 100%; height: 0; background: linear-gradient(to bottom, var(--teal), var(--violet)); border-radius: 2px; }
+.scroll-indicator { position: fixed; bottom: 2rem; left: 50%; transform: translateX(-50%); color: rgba(255,255,255,.9);
+  font-size: .95rem; z-index: 3; letter-spacing: .5px; }
+
+.scroll-indicator .si-in { opacity: 0; display: flex; flex-direction: column; align-items: center; gap: .6rem; }
+.scroll-indicator .chev { width: 14px; height: 14px; border-right: 2px solid #fff; border-bottom: 2px solid #fff; transform: rotate(45deg); animation: bounce 1.8s ease infinite; }
+@keyframes bounce { 0%,100% { transform: translateY(0) rotate(45deg); opacity: .5; } 50% { transform: translateY(6px) rotate(45deg); opacity: 1; } }
+
+.video-container { position: fixed; right: 4%; top: 50%; transform: translateY(-50%); z-index: 2; opacity: 0; display: flex; flex-direction: column; gap: 1.2rem; pointer-events: none; }
+.video-container.live { pointer-events: auto; }
+.hero-clip { position: relative; width: 470px; }
+.hero-clip video { width: 100%; display: block; border-radius: 10px; box-shadow: 0 8px 32px rgba(0,0,0,.6); }
+
+
+.tag { position: absolute; top: 10px; left: 10px; padding: .28rem .7rem; border-radius: 999px; font-size: .75rem; font-weight: 600; letter-spacing: .4px;
+  backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); display: inline-flex; align-items: center; gap: .4rem; }
+.tag.bad { background: rgba(248,113,113,.22); color: #fecaca; border: 1px solid rgba(248,113,113,.55); }
+.tag.good { background: rgba(45,212,191,.18); color: #ccfbf1; border: 1px solid rgba(45,212,191,.6); }
+.tag.violet { background: rgba(167,139,250,.2); color: #ede9fe; border: 1px solid rgba(167,139,250,.6); }
+
+
+.static-sections { position: relative; z-index: 2; background: transparent; padding: 20px 0 40px; }
+.content-shade { position: fixed; inset: 0; height: 100vh; height: 100dvh; z-index: 1; pointer-events: none; opacity: 0;
+  background: linear-gradient(to bottom, rgba(5,6,8,.70), rgba(5,6,8,.86) 40%, rgba(5,6,8,.92)); }
+.section { max-width: 1200px; margin: 0 auto; padding: 56px 40px; scroll-margin-top: 90px; }
+.paper-title-section { scroll-margin-top: 60px; }
+.paper-title-section { text-align: left; padding: 96px 40px 56px; max-width: 1200px; margin: 0 auto; }
+.paper-title { font-size: 2.55rem; font-weight: 400; line-height: 1.35; margin-bottom: 2.2rem; }
+.paper-title .brand { display: block; font-size: 4.2rem; font-weight: 800; letter-spacing: 1px; margin-bottom: .2rem;
+  background: var(--grad); background-size: 300% 100%; -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+  animation: gradientShift 6s ease infinite; }
+.paper-title .brand small { font-size: 1.6rem; font-weight: 500; letter-spacing: .5px; margin-left: .6rem; -webkit-text-fill-color: var(--muted); }
+.authors { font-size: 1.02rem; font-weight: 300; line-height: 2; color: var(--muted); }
+.authors a { color: var(--muted); text-decoration: none; border-bottom: 1px solid transparent; transition: all .25s; }
+.authors a:hover { color: var(--teal); border-bottom-color: var(--teal); }
+.nw { white-space: nowrap; }
+.authors sup { font-size: .68em; margin-left: 1px; }
+.venue { display: inline-block; margin-top: .4rem; font-size: .85rem; letter-spacing: 1px; text-transform: uppercase; color: var(--faint); }
+.btn-row { display: flex; flex-wrap: wrap; gap: .8rem; margin-top: 2rem; }
+.pill-btn { display: inline-flex; align-items: center; gap: .55rem; padding: .7rem 1.25rem; border-radius: 999px; border: 1px solid var(--line);
+  background: rgba(255,255,255,.04); color: var(--text); text-decoration: none; font-size: .92rem; font-weight: 500; transition: all .25s ease; }
+.pill-btn:hover { border-color: var(--teal); background: rgba(45,212,191,.08); transform: translateY(-1px); }
+.pill-btn.disabled { color: var(--faint); pointer-events: none; }
+.pill-btn svg { width: 17px; height: 17px; }
+
+.section-title { font-size: 2.45rem; font-weight: 600; margin-bottom: 1.6rem; line-height: 1.2; }
+.section-title.teal { color: var(--teal); }
+.section-title.violet { color: var(--violet); }
+.eyebrow { font-size: .8rem; letter-spacing: 2.5px; text-transform: uppercase; color: var(--faint); margin-bottom: .7rem; display: flex; align-items: center; gap: .6rem; }
+.eyebrow::before { content: ''; width: 26px; height: 2px; background: currentColor; display: inline-block; }
+.eyebrow.teal { color: var(--teal); } .eyebrow.violet { color: var(--violet); }
+.section-content { font-size: 1.08rem; line-height: 1.8; color: rgba(244,246,248,.86); margin-bottom: 2rem; max-width: 980px; }
+.section-content p + p { margin-top: 1rem; }
+.section-content b, .section-content strong { color: #fff; font-weight: 600; }
+.highlight-text { display: inline-block; font-weight: 800; background: var(--grad); background-size: 300% 100%; -webkit-background-clip: text;
+  background-clip: text; -webkit-text-fill-color: transparent; animation: gradientShift 4s ease infinite; filter: brightness(1.15); }
+.highlight-teal { color: var(--teal); font-weight: 700; } .highlight-violet { color: var(--violet); font-weight: 700; } .highlight-red { color: var(--red); font-weight: 700; }
+.glitch-text { display: inline-block; position: relative; }
+.glitch-text.glitch { animation: glitch .35s cubic-bezier(.25,.46,.45,.94) both; }
+@keyframes glitch { 0%,100% { transform: translate(0); } 20% { transform: translate(-2px,2px); } 40% { transform: translate(2px,-2px); } 60% { transform: translate(-2px,-2px); } 80% { transform: translate(2px,2px); } }
+.divider { max-width: 1120px; margin: 0 auto; height: 1px; background: linear-gradient(90deg, transparent, var(--line), transparent); }
+
+
+.stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.2rem; }
+.stat { background: linear-gradient(180deg, var(--panel), rgba(16,19,24,.4)); border: 1px solid var(--line); border-radius: 14px; padding: 1.5rem 1.4rem 1.3rem; position: relative; overflow: hidden; }
+.stat::before { content: ''; position: absolute; left: 0; top: 0; height: 3px; width: 100%; background: var(--accent, var(--grad)); }
+.stat.teal { --accent: var(--teal); } .stat.violet { --accent: var(--violet); }
+.stat .big { font-size: 2.35rem; font-weight: 700; letter-spacing: -.5px; line-height: 1.1; white-space: nowrap; }
+.stat .big .from { color: var(--faint); font-weight: 500; font-size: 1.5rem; }
+.stat .big .arrow { color: var(--faint); font-weight: 300; font-size: 1.4rem; margin: 0 .25rem; }
+.stat .lbl { margin-top: .6rem; font-size: .92rem; color: var(--muted); line-height: 1.5; }
+
+
+.fig-card { background: #fff; border-radius: 14px; padding: 18px; box-shadow: 0 12px 48px rgba(0,0,0,.5); overflow: hidden; }
+.fig-card img { width: 100%; display: block; }
+.zoomable { cursor: zoom-in; }
+.fig-caption { margin-top: 1rem; font-size: .93rem; line-height: 1.65; color: var(--muted); max-width: 1000px; }
+.fig-caption b { color: var(--text); }
+
+
+.flow { display: flex; align-items: stretch; justify-content: space-between; gap: .6rem; margin-top: 2.4rem; }
+.flow-item { flex: 1; display: flex; flex-direction: column; align-items: center; }
+.flow-item.icon { flex: 0 0 76px; justify-content: center; }
+.flow-media { width: 100%; aspect-ratio: 16/9; border-radius: 10px; overflow: hidden; background: var(--panel); border: 1px solid var(--line); position: relative; box-shadow: 0 6px 24px rgba(0,0,0,.45); }
+.flow-media img, .flow-media video { width: 100%; height: 100%; object-fit: cover; display: block; }
+.flow-label { margin-top: 1rem; font-size: .93rem; color: var(--muted); text-align: center; line-height: 1.45; max-width: 260px; }
+.flow-label b { color: var(--text); }
+.icon-container svg { width: 60px; height: 60px; }
+.flow-chip { top: auto !important; left: 10px; bottom: 10px; }
+
+
+.compare-wrap { display: grid; grid-template-columns: 1.55fr 1fr; gap: 2rem; align-items: center; }
+.compare { position: relative; width: 100%; aspect-ratio: 16/9; border-radius: 12px; overflow: hidden; user-select: none; cursor: ew-resize;
+  box-shadow: 0 10px 40px rgba(0,0,0,.55); border: 1px solid var(--line); touch-action: pan-y; }
+.compare img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; pointer-events: none; }
+.compare .top { clip-path: inset(0 0 0 50%); }
+.compare .handle { position: absolute; top: 0; bottom: 0; left: 50%; width: 2px; background: #fff; transform: translateX(-1px); box-shadow: 0 0 12px rgba(0,0,0,.6); }
+.compare .handle::after { content: '⟷'; position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); width: 42px; height: 42px; border-radius: 50%;
+  background: rgba(10,12,16,.75); border: 2px solid #fff; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; color: #fff; backdrop-filter: blur(6px); }
+.compare .lab { position: absolute; bottom: 12px; padding: .3rem .7rem; border-radius: 6px; background: rgba(0,0,0,.6); font-size: .78rem; letter-spacing: .5px; }
+.compare .lab.l { left: 12px; } .compare .lab.r { right: 12px; color: var(--violet-2); }
+.scene-tabs { display: flex; gap: .5rem; margin-top: 1rem; }
+.seg-btn { padding: .45rem 1rem; border-radius: 999px; border: 1px solid var(--line); background: transparent; color: var(--muted); cursor: pointer; font-family: inherit; font-size: .85rem; transition: all .2s; }
+.seg-btn.on { color: #0b0d10; background: var(--teal); border-color: var(--teal); font-weight: 600; }
+.seg-btn.violet.on { background: var(--violet); border-color: var(--violet); }
+.kv { display: grid; grid-template-columns: auto 1fr; gap: .6rem 1.2rem; font-size: .98rem; color: var(--muted); }
+.kv .num { font-size: 2rem; font-weight: 700; color: #fff; }
+
+
+.chart-card { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 1.4rem 1.4rem 1rem; position: relative; }
+.chart-card h4 { font-size: 1rem; font-weight: 600; margin-bottom: .2rem; }
+.chart-card .sub { font-size: .85rem; color: var(--faint); margin-bottom: .8rem; }
+.chart-grid { display: grid; grid-template-columns: 1.35fr 1fr; gap: 1.4rem; }
+.chart svg { display: block; width: 100%; height: auto; overflow: visible; }
+.chart text { font-family: 'Inter', sans-serif; fill: rgba(244,246,248,.78); }
+.chart .axis path, .chart .axis line { stroke: rgba(255,255,255,.18); }
+.chart .grid line { stroke: rgba(255,255,255,.06); }
+.legend { display: flex; flex-wrap: wrap; gap: 1rem; font-size: .82rem; color: var(--muted); margin-top: .4rem; }
+.legend i { display: inline-block; width: 12px; height: 12px; border-radius: 3px; margin-right: .4rem; vertical-align: -1px; }
+.chart-tip { position: absolute; pointer-events: none; background: rgba(10,12,16,.92); border: 1px solid var(--line); padding: .45rem .7rem; border-radius: 8px; font-size: .8rem; opacity: 0; transition: opacity .15s; white-space: nowrap; z-index: 5; }
+
+
+.pair-grid { display: grid; grid-template-columns: 1fr; gap: 2.2rem; }
+.pair { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+.pair .clip { position: relative; }
+.pair video { width: 100%; display: block; border-radius: 10px; aspect-ratio: 960/496; background: #000; box-shadow: 0 6px 24px rgba(0,0,0,.5); }
+.pair-head { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: .7rem; gap: 1rem; }
+.pair-head h3 { font-size: 1.2rem; font-weight: 600; }
+.pair-head span { font-size: .88rem; color: var(--faint); }
+.event-tabs { display: flex; flex-wrap: wrap; gap: .5rem; margin-bottom: 1.4rem; }
+.mini-pairs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.4rem; margin-top: 2.2rem; }
+.mini { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: .8rem; }
+.mini .two { display: grid; grid-template-columns: 1fr 1fr; gap: .5rem; }
+.mini .clip { position: relative; }
+.mini video { width: 100%; display: block; border-radius: 7px; background: #000; aspect-ratio: 960/496; }
+.mini .tag { top: 6px; left: 6px; font-size: .64rem; padding: .18rem .5rem; }
+.mini .cap { font-size: .85rem; color: var(--muted); margin-top: .65rem; text-align: center; }
+
+
+.tbl { width: 100%; border-collapse: collapse; font-size: .92rem; }
+.tbl th, .tbl td { padding: .62rem .7rem; text-align: right; border-bottom: 1px solid var(--line); }
+.tbl th:first-child, .tbl td:first-child { text-align: left; }
+.tbl th { color: var(--faint); font-weight: 500; font-size: .8rem; letter-spacing: .5px; text-transform: uppercase; }
+.tbl tr.ours td { color: #fff; font-weight: 600; background: linear-gradient(90deg, rgba(45,212,191,.10), rgba(167,139,250,.06)); }
+.tbl tr.ours td:first-child { border-left: 3px solid var(--teal); }
+.tbl .neg { color: var(--red); }
+.badge { display: inline-block; font-size: .7rem; padding: .12rem .45rem; border-radius: 5px; margin-left: .4rem; vertical-align: 1px; border: 1px solid var(--line); color: var(--faint); font-weight: 500; }
+.badge.no { border-color: rgba(45,212,191,.6); color: var(--teal-2); }
+
+.callouts { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.2rem; margin-top: 2rem; }
+.callout { border: 1px solid var(--line); border-radius: 12px; padding: 1.2rem 1.3rem; background: rgba(255,255,255,.02); }
+.callout .k { font-size: .78rem; letter-spacing: 1.5px; text-transform: uppercase; color: var(--faint); margin-bottom: .5rem; }
+.callout .v { font-size: 1.6rem; font-weight: 700; }
+.callout .d { font-size: .9rem; color: var(--muted); margin-top: .4rem; line-height: 1.55; }
+
+.technical-details { margin-top: 1.6rem; }
+.technical-details summary { cursor: pointer; font-size: 1.05rem; font-weight: 500; color: var(--teal); padding: .8rem 0; list-style: none; user-select: none; transition: color .3s ease; }
+.technical-details summary::-webkit-details-marker { display: none; }
+.technical-details summary::before { content: '▶'; display: inline-block; margin-right: .5rem; transition: transform .3s ease; font-size: .8rem; }
+.technical-details[open] summary::before { transform: rotate(90deg); }
+.technical-details summary:hover { color: var(--teal-2); }
+.technical-details-content { padding: .6rem 0 1rem 1.4rem; color: rgba(244,246,248,.85); line-height: 1.8; }
+.technical-details-content li { margin-bottom: .9rem; padding-left: 1.3rem; position: relative; list-style: none; }
+.technical-details-content li::before { content: '•'; position: absolute; left: 0; color: var(--teal); font-weight: bold; }
+
+.bibtex-code { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 1.6rem; font-family: 'JetBrains Mono', monospace;
+  font-size: .86rem; line-height: 1.65; color: var(--teal-2); overflow-x: auto; position: relative; }
+.copy-btn { position: absolute; top: 12px; right: 12px; background: rgba(255,255,255,.06); border: 1px solid var(--line); color: var(--muted); border-radius: 6px;
+  padding: .3rem .7rem; cursor: pointer; font-family: inherit; font-size: .78rem; }
+.copy-btn:hover { color: #fff; border-color: var(--teal); }
+footer { max-width: 1200px; margin: 0 auto; padding: 30px 40px 60px; color: var(--faint); font-size: .85rem; line-height: 1.7; }
+footer a { color: var(--muted); }
+
+
+.lightbox { position: fixed; inset: 0; background: rgba(0,0,0,.9); z-index: 10000; display: none; align-items: center; justify-content: center; padding: 3vw; cursor: zoom-out; }
+.lightbox.on { display: flex; }
+.lightbox img { max-width: 100%; max-height: 100%; background: #fff; border-radius: 8px; padding: 10px; }
+
+
+.reveal { opacity: 0; transform: translateY(28px); }
+
+@media (max-width: 900px) {
+  .stats { grid-template-columns: repeat(2, 1fr); }
+  .chart-grid, .compare-wrap { grid-template-columns: 1fr; }
+  .callouts, .mini-pairs { grid-template-columns: 1fr; }
+}
+@media (max-width: 768px) {
+  .title-section { left: 5%; }
+  .vertical-bar { height: 6.4rem; margin-right: 1rem; width: 7px; }
+  .main-title { font-size: 2.4rem; }
+  .subtitle { font-size: 1.1rem; }
+  .header-title { font-size: 1rem; top: 1.5rem; }
+  .header-left { left: 1.5rem; }
+  .nav-buttons { top: 4.3rem; left: 0; transform: none; width: 100%; padding: 0 1rem; gap: .2rem; justify-content: center; }
+  .nav-btn { padding: .5rem .7rem; font-size: .8rem; }
+  .hud { left: 1.2rem; bottom: 1.2rem; font-size: .65rem; }
+  .scroll-rail { right: .8rem; }
+  .video-container { left: 5%; right: 5%; top: auto; bottom: 9%; transform: none; }
+  #title-section-2 { top: 33%; }
+  #title-section-2 .main-title { font-size: 1.9rem; }
+  .nav-btn { white-space: nowrap; } .nav-btn .nav-lg { display: none; } .nav-btn .nav-sm { display: inline; }
+  #nav-home { display: none; }
+  .header-bar { height: 112px; }
+  .section { scroll-margin-top: 118px; }
+  .hero-clip { width: 100%; }
+  .video-container .hero-clip:nth-child(2) { display: none; }
+  .paper-title { font-size: 1.55rem; }
+  .paper-title .brand { font-size: 2.8rem; }
+  .paper-title .brand small { display: block; margin: .2rem 0 0; font-size: 1.1rem; }
+  .section, .paper-title-section { padding: 40px 18px; }
+  .section-title { font-size: 1.75rem; }
+  .stats { grid-template-columns: 1fr; }
+  .stat .big { font-size: 2rem; }
+  .flow { flex-direction: column; gap: 1.6rem; }
+  .flow-item.icon { flex: 0 0 auto; }
+  .flow-item.icon svg { transform: rotate(90deg); }
+  .pair { grid-template-columns: 1fr; }
+  .tbl { font-size: .8rem; } .tbl th, .tbl td { padding: .5rem .35rem; }
+  .table-scroll { overflow-x: auto; }
+}
+</style>
+<style>
+
+.p2p { background: var(--panel); border: 1px solid var(--line); border-radius: 16px; padding: 1rem; }
+.p2p-top { display: flex; justify-content: space-between; gap: .8rem; flex-wrap: wrap; margin-bottom: .8rem; }
+.p2p-top > div { display: flex; gap: .4rem; flex-wrap: wrap; align-items: center; }
+.p2p-top .lbl { font-size: .78rem; letter-spacing: 2px; text-transform: uppercase; color: var(--faint); margin-right: .3rem; }
+.p2p-scenes { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: .55rem; margin-bottom: .8rem; }
+.p2p-card { position: relative; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; background: #0b0e13; color: var(--text); cursor: pointer; padding: 0; text-align: left; font-family: inherit; aspect-ratio: 4/3; transition: border-color .2s, transform .2s; }
+.p2p-card img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: .55; transition: opacity .2s; }
+.p2p-card::after { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(5,7,10,0) 20%, rgba(5,7,10,.92) 100%); }
+.p2p-card .t, .p2p-card .o { position: relative; z-index: 1; }
+.p2p-card .t { position: absolute; left: .6rem; right: .6rem; bottom: 1.9rem; font-size: .82rem; font-weight: 600; line-height: 1.25; }
+.p2p-card .o { position: absolute; left: .6rem; right: .6rem; bottom: .55rem; display: flex; gap: .7rem; font-size: .72rem; color: var(--muted); }
+.p2p-card .o i { font-style: normal; font-weight: 700; }
+.p2p-card i.bad { color: var(--red); } .p2p-card i.good { color: var(--teal); } .p2p-card i.warn { color: var(--amber); }
+.p2p-card:hover { transform: translateY(-2px); } .p2p-card:hover img { opacity: .8; }
+.p2p-card.on { border-color: var(--teal); box-shadow: 0 0 0 1px var(--teal), 0 0 24px rgba(45,212,191,.25); } .p2p-card.on img { opacity: .85; }
+.p2p-stage { position: relative; width: 100%; aspect-ratio: 16/8; border-radius: 12px; overflow: hidden; background: #05070a; touch-action: pan-y; }
+.p2p-stage canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.p2p-labels { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
+.p2p-lab { position: absolute; left: 0; top: 0; white-space: nowrap; font-size: .74rem; line-height: 1.25; padding: .25rem .5rem; border-radius: 6px; background: rgba(5,7,10,.78); border-left: 3px solid; backdrop-filter: blur(4px); }
+.p2p-lab b { display: block; font-weight: 600; } .p2p-lab span { color: var(--muted); font-family: 'JetBrains Mono', monospace; font-size: .7rem; }
+.p2p-lab.dt { border-color: var(--red); } .p2p-lab.r2r { border-color: var(--teal); }
+.p2p-lab.hit { border: 1px solid #ff3b3b; background: rgba(60,6,6,.85); color: #fff; text-transform: uppercase; letter-spacing: 1.5px; text-align: center; }
+.p2p-lab.hit span { color: #fecaca; }
+.p2p-legend { position: absolute; left: .8rem; top: .7rem; display: flex; flex-wrap: wrap; gap: .4rem .9rem; font-size: .74rem; color: var(--muted); background: rgba(5,7,10,.6); padding: .35rem .6rem; border-radius: 8px; max-width: calc(100% - 7rem); }
+.p2p-legend i { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: .35rem; vertical-align: -1px; }
+.p2p-legend i.ln { width: 14px; height: 0; border-top: 2px solid; border-radius: 0; vertical-align: 3px; } .p2p-legend i.ln.dash { border-top-style: dashed; }
+.p2p-clock { position: absolute; right: .8rem; top: .7rem; font-size: .85rem; color: var(--text); background: rgba(5,7,10,.6); padding: .3rem .6rem; border-radius: 8px; }
+.p2p-loading { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: var(--faint); font-size: .9rem; letter-spacing: 2px; text-transform: uppercase; pointer-events: none; transition: opacity .3s; background: rgba(5,7,10,.4); }
+.p2p-bar { display: flex; align-items: center; gap: .8rem; margin: .7rem 0 .2rem; }
+.p2p-btn { flex: 0 0 auto; height: 34px; min-width: 34px; border-radius: 999px; border: 1px solid var(--line); background: var(--panel-2); color: var(--text); cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: .8rem; padding: 0 .6rem; }
+.p2p-btn svg { width: 16px; height: 16px; fill: currentColor; }
+.p2p-tl { position: relative; flex: 1; height: 38px; cursor: pointer; touch-action: none; }
+.p2p-tl .trk { position: absolute; left: 0; right: 0; top: 10px; height: 6px; border-radius: 3px; background: rgba(255,255,255,.09); overflow: hidden; }
+.p2p-tl .prog { height: 100%; width: 0; background: linear-gradient(90deg, var(--teal), #7dd3fc); }
+.p2p-tl .ticks i { position: absolute; top: 6px; width: 1px; height: 14px; background: rgba(255,255,255,.25); }
+.p2p-tl .nums span { position: absolute; top: 22px; transform: translateX(-50%); font-size: .68rem; color: var(--faint); white-space: nowrap; }
+.p2p-tl .nums span:first-child { transform: none; } .p2p-tl .nums span:last-child { transform: translateX(-100%); }
+.p2p-tl .marks i { position: absolute; top: 6px; width: 10px; height: 10px; margin-left: -5px; transform: rotate(45deg); border: 2px solid #05070a; }
+.p2p-tl .marks i.dt { background: var(--red); } .p2p-tl .marks i.r2r { background: var(--teal); } .p2p-tl .marks i.gt { background: #e2e8f0; }
+.p2p-tl .head { position: absolute; top: 4px; width: 3px; height: 18px; margin-left: -1.5px; background: #fff; border-radius: 2px; box-shadow: 0 0 10px rgba(255,255,255,.7); }
+.p2p-info { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr); gap: 1.2rem; margin-top: .8rem; }
+.p2p-text h4 { font-size: 1.1rem; font-weight: 600; margin-bottom: .3rem; }
+.p2p-text .d { color: var(--muted); font-size: .92rem; line-height: 1.55; }
+.p2p-text .seen { margin-top: .6rem; font-size: .84rem; line-height: 1.5; color: var(--muted); }
+.p2p-status { display: grid; gap: .35rem; margin-top: .8rem; }
+.p2p-status .st { display: flex; align-items: center; gap: .5rem; font-size: .86rem; padding: .35rem .6rem; border-radius: 8px; background: rgba(255,255,255,.03); border: 1px solid transparent; transition: all .25s; }
+.p2p-status .st i { width: 9px; height: 9px; border-radius: 50%; flex: 0 0 auto; } .p2p-status .st .n { flex: 1; } .p2p-status .st .v { font-size: .8rem; color: var(--muted); }
+.p2p-status .st.bad { border-color: rgba(248,113,113,.5); background: rgba(248,113,113,.08); } .p2p-status .st.bad .v { color: var(--red); }
+.p2p-status .st.good { border-color: rgba(45,212,191,.45); background: rgba(45,212,191,.07); } .p2p-status .st.good .v { color: var(--teal); }
+.p2p-toggles { display: flex; flex-wrap: wrap; gap: .3rem 1rem; margin-top: .8rem; font-size: .8rem; color: var(--faint); }
+.p2p-toggles input { accent-color: var(--teal); vertical-align: -2px; margin-right: .25rem; }
+.p2p-cams { display: grid; grid-template-columns: 1fr 1fr; gap: .6rem; }
+.p2p-cams figure { margin: 0; } .p2p-cams canvas { width: 100%; height: auto; border-radius: 8px; display: block; background: #05070a; }
+.p2p-cams figcaption { font-size: .74rem; color: var(--faint); margin-top: .3rem; line-height: 1.35; }
+.p2p-bars { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1.2rem; margin: 1rem 0 .4rem; }
+.p2p-bars .grp h5 { font-size: .85rem; font-weight: 600; margin-bottom: .5rem; color: var(--text); }
+.p2p-bars .row { display: grid; grid-template-columns: 5.5rem 1fr 3.2rem; align-items: center; gap: .5rem; font-size: .76rem; color: var(--muted); margin: .28rem 0; }
+.p2p-bars .row .b { height: 12px; border-radius: 3px; background: rgba(255,255,255,.05); position: relative; overflow: hidden; }
+.p2p-bars .row .b > div { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 3px; transition: width .6s cubic-bezier(.2,.8,.2,1); }
+.p2p-bars .row .n { text-align: right; font-family: 'JetBrains Mono', monospace; color: var(--text); }
+@media (max-width: 1000px) { .p2p-scenes { grid-template-columns: repeat(3, minmax(0, 1fr)); } .p2p-info { grid-template-columns: 1fr; } }
+@media (max-width: 640px) { .p2p { padding: .6rem; } .p2p-stage { aspect-ratio: 4/3.4; } .p2p-scenes { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .p2p-legend { font-size: .66rem; gap: .2rem .6rem; } .p2p-bars { grid-template-columns: 1fr; } .p2p-cams { grid-template-columns: 1fr 1fr; } .p2p-top .lbl { display: none; } }
+</style>
+<script type="importmap">{ "imports": { "three": "./vendor/three.module.js", "three/addons/": "./vendor/jsm/" } }</script>
+</head>
+<body>
+
+<div class="loading-screen" id="loading-screen">
+  <canvas id="loading-rain"></canvas>
+  <div class="loading-brand">R2R</div>
+  <div class="loading-text">Released-to-Real</div>
+  <div class="loading-spinner"><div class="spinner-ring"></div><div class="spinner-ring"></div><div class="spinner-ring"></div></div>
+  <div class="loading-bar"><div id="loading-bar"></div></div>
+</div>
+
+<canvas id="background-canvas" class="background-canvas"></canvas>
+<div class="vignette"></div>
+<div class="scanlines" id="scanlines"></div>
+<div class="dark-overlay" id="dark-overlay"></div>
+<div class="content-shade" id="content-shade"></div>
+<div class="top-gradient"></div>
+<div class="header-bar"></div>
+
+<div class="header-title header-left"><span>R2R</span></div>
+
+<nav class="nav-buttons">
+  <a href="#" class="nav-btn" id="nav-home">Home</a>
+  <a href="#" class="nav-btn" id="nav-paper">Paper Details</a>
+  <a href="#planning" class="nav-btn" id="nav-planning">Planning</a>
+  <a href="#perception" class="nav-btn" id="nav-perception">Perception</a>
+  <a href="#p2p" class="nav-btn" id="nav-p2p"><span class="nav-lg">Perception &rarr; Planning</span><span class="nav-sm">Perc. &rarr; Plan.</span></a>
+</nav>
+
+<div class="content">
+  <div class="title-section" id="title-section">
+    <div class="vertical-bar"></div>
+    <div class="title-content">
+      <h1 class="main-title" id="t1a">Released Models,</h1>
+      <h1 class="main-title" id="t1b">Real Vehicles</h1>
+      <p class="subtitle">Beyond the benchmark: localizing released driving models to the vehicle they actually drive</p>
+    </div>
+  </div>
+  <div class="title-section" id="title-split">
+    <div class="vertical-bar"></div>
+    <div class="title-content">
+      <h1 class="main-title" id="ts1">Released Planner.</h1>
+      <h1 class="main-title" id="ts2">Collision.</h1>
+      <p class="subtitle" id="ts3">Closed loop in a twin of the real street: the released planner cuts the turn into the parked truck.</p>
+    </div>
+  </div>
+  <div class="title-section" id="title-section-2">
+    <div class="vertical-bar"></div>
+    <div class="title-content">
+      <h1 class="main-title" id="t2a">Localize the Coupling.</h1>
+      <h1 class="main-title" id="t2b">Correct Only What Breaks.</h1>
+      <p class="subtitle">HA-RL on ordinary driving logs &middot; closed-loop success 82.2% &rarr; 95.2%</p>
+    </div>
+  </div>
+  <div class="video-container" id="video-container">
+    <div class="hero-clip"><video muted loop playsinline preload="none" data-src="media/closed_loop/F36_released.mp4"></video><span class="tag bad">✕ Released &middot; collision</span></div>
+    <div class="hero-clip"><video muted loop playsinline preload="none" data-src="media/closed_loop/F36_r2r.mp4"></video><span class="tag good">✓ R2R &middot; passes the truck</span></div>
+  </div>
+</div>
+
+<div class="world-chip mono" id="world-chip"><span class="wdot" id="wdot"></span><span id="world-name">REAL</span><span class="wsub" id="world-sub">our vehicle &middot; front camera</span></div>
+<div class="scroll-rail" id="scroll-rail"><div id="scroll-rail-fill"></div></div>
+<div class="scroll-indicator" id="scroll-indicator"><div class="si-in">Scroll to explore<span class="chev"></span></div></div>
+
+<div class="static-sections" id="static-sections">
+
+  <div class="paper-title-section reveal" id="paper-top">
+    <h1 class="paper-title">
+      <span class="brand">R2R<small>Released-to-Real</small></span>
+      Beyond the Benchmark: Localizing Released<br>Autonomous Driving Models to Real Vehicles
+    </h1>
+    <div class="authors">
+      <span class="nw">Morui Zhu</span>, <span class="nw">Deyuan Qu</span>, <span class="nw">Qi Chen</span>, <span class="nw">Qing Yang</span>
+    </div>
+    <div class="btn-row">
+      <a class="pill-btn disabled" href="#">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6M8 13h8M8 17h5"/></svg>arXiv (coming soon)</a>
+      <a class="pill-btn disabled" href="#">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 19c-4.3 1.4-4.3-2.5-6-3m12 5v-3.5c0-1 .1-1.4-.5-2 2.8-.3 5.5-1.4 5.5-6a4.6 4.6 0 0 0-1.3-3.2 4.2 4.2 0 0 0-.1-3.2s-1.1-.3-3.5 1.3a12.3 12.3 0 0 0-6.2 0C6.5 2.8 5.4 3.1 5.4 3.1a4.2 4.2 0 0 0-.1 3.2A4.6 4.6 0 0 0 4 9.5c0 4.6 2.7 5.7 5.5 6-.6.6-.6 1.2-.5 2V21"/></svg>Code (coming soon)</a>
+      <a class="pill-btn" href="#bibtex">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M7 8h10M7 12h10M7 16h6"/><rect x="3" y="4" width="18" height="16" rx="2"/></svg>BibTeX</a>
+    </div>
+  </div>
+
+    <div class="section reveal" style="padding-top: 8px;">
+    <div class="stats">
+      <div class="stat violet">
+        <div class="big"><span class="from">82.2%</span><span class="arrow">→</span><span class="count" data-to="95.2" data-dec="1" data-suf="%">95.2%</span></div>
+        <div class="lbl">closed-loop success of a released diffusion-based planner after HA-RL</div>
+      </div>
+      <div class="stat violet">
+        <div class="big"><span class="count" data-to="19" data-dec="0" data-suf="×">19×</span></div>
+        <div class="lbl">cheaper rollouts than generative closed-loop RL (0.9&nbsp;s vs 17&nbsp;s), with no world model</div>
+      </div>
+      <div class="stat teal">
+        <div class="big"><span class="from">0.041</span><span class="arrow">→</span><span class="count" data-to="0.420" data-dec="3">0.420</span></div>
+        <div class="lbl">vehicle mAP of a released multi-camera detector on a five-camera rig, weights frozen</div>
+      </div>
+      <div class="stat teal">
+        <div class="big"><span class="count" data-to="0" data-dec="0">0</span> <span style="font-size:1.25rem;font-weight:500;color:var(--muted)">target labels</span></div>
+        <div class="lbl">for the sensor corrections: calibration and ordinary driving only, on three real rigs</div>
+      </div>
+    </div>
+  </div>
+
+    <div class="section reveal">
+    <h2 class="section-title">Strong on the Benchmark, <span class="highlight-red">Broken</span> on a New Vehicle</h2>
+    <div class="section-content">
+      <p>Open datasets and released models have made strong driving perception and planning widely accessible, yet a strong benchmark score does not make a released model ready for a real vehicle. Differences in <b>sensor configuration</b>, <b>data distribution</b> and <b>execution process</b> can invalidate what the model learned on its source system &mdash; and they persist even after the obvious adaptation is done.</p>
+      <p><b>R2R</b> takes a released model and ordinary driving from the target vehicle, localizes what remains coupled to the source system by <b>controlled intervention</b>, and corrects only that part.</p>
+    </div>
+    <div class="fig-card"><img class="zoomable" src="media/figs/fig_teaser.jpg" alt="R2R overview" loading="lazy"></div>
+    <div class="fig-caption"><b>(a)</b> A released model that scores well on benchmarks fails in perception and planning on a new vehicle in a new city. <b>(b)</b> Retraining would require collecting and annotating data for every sensor rig. <b>(c)</b> R2R localizes what remains coupled to the source system and corrects only that part: sensor adaptation with frozen weights and behavior adaptation with Human-Anchored RL (HA-RL).</div>
+  </div>
+
+    <div class="section reveal" id="gap">
+    <h2 class="section-title">Higher Open-Loop Score, <span class="glitch-text highlight-red" id="glitch-lower">Lower</span> Closed-Loop Success</h2>
+    <div class="section-content">
+      <p>Conventional post-training &mdash; imitation learning followed by RL with a trajectory-level driving score &mdash; raises the planner's open-loop score from <b>0.698</b> to <b>0.809</b>, the highest of all variants. In closed loop its success rate <b>falls</b> from 82.2% to <b>78.1%</b>, and collisions rise from 4.4% to 12.2%.</p>
+    </div>
+    <div class="chart-grid">
+      <div class="chart-card">
+        <h4>Open-loop score vs. closed-loop success</h4>
+        <div class="sub">Post-training variants of the same released planner on our downtown benchmark (90 closed-loop events)</div>
+        <div class="chart" id="chart-olsr"></div>
+        <div class="legend"><span><i style="background:linear-gradient(var(--violet),#6d5bd0)"></i>Closed-loop success rate (%)</span><span><i style="background:#fbbf24;height:3px;vertical-align:3px"></i>Open-loop RPDMS</span></div>
+      </div>
+      <div class="chart-card">
+        <h4>Why: the first planned segment runs fast</h4>
+        <div class="sub">How much faster the first planned segment is than the input speed (m/s), probed on fixed frames</div>
+        <div class="chart" id="chart-offset"></div>
+        <div class="section-content" style="margin:.8rem 0 0">The trajectory reward barely registers this offset: making the first segment of the human trajectory 1&nbsp;m/s faster changes its score by &lt; 0.001. In closed loop, every replan executes it again.</div>
+      </div>
+    </div>
+  </div>
+
+    <div class="section reveal" id="method">
+    <h2 class="section-title">One Methodology: <span class="highlight-text">Intervene &rarr; Localize &rarr; Correct</span></h2>
+    <div class="section-content">
+      <p>R2R varies one deployment variable while holding the remaining inputs, representations or parameters fixed, localizes the source dependency, and corrects only the affected <b>objective</b>, <b>interface</b> or <b>representation</b>. Both halves start from the same step: <b>sensor-interface alignment (SIA)</b> re-renders the recorded target cameras as the cameras each model was trained with.</p>
+    </div>
+    <div class="fig-card"><img class="zoomable" src="media/figs/fig_r2r.jpg" alt="R2R method" loading="lazy"></div>
+    <div class="fig-caption"><b>Top, behavior adaptation:</b> SIA, imitation learning on target driving, then HA-RL &mdash; the ego state follows the planner's own execution through a tracker on recorded observations, and the reward anchors it to human behavior. <b>Bottom, sensor adaptation (training-free):</b> spatial representation alignment (SRA) re-weights the source spatial prior of the frozen detector, and temporal representation alignment (TRA) restores the source frame interval in its temporal memory.</div>
+  </div>
+
+    <div class="section reveal">
+    <h2 class="section-title">Show the Model the Camera It Was Trained With</h2>
+    <div class="compare-wrap">
+      <div>
+        <div class="compare" id="compare">
+          <img class="bottom" id="cmp-raw" src="media/sia/raw_104.jpg" alt="raw target camera">
+          <img class="top" id="cmp-sia" src="media/sia/sia_104.jpg" alt="re-rendered planner camera">
+          <div class="handle" id="cmp-handle"></div>
+          <span class="lab l mono">TARGET CAMERA</span><span class="lab r mono">RE-RENDERED &middot; PLANNER CAMERA</span>
+        </div>
+        <div class="scene-tabs" id="cmp-tabs">
+          <button class="seg-btn violet on" data-t="104">Work zone</button>
+          <button class="seg-btn violet" data-t="160">Downtown</button>
+        </div>
+      </div>
+      <div>
+        <div class="section-content" style="margin-bottom:1.4rem">
+          <p>Our front camera is wider, mounted differently and sees the hood. SIA re-renders every frame into the intrinsics and pose of the camera the released model was trained with, using only the calibrations. Drag the slider.</p>
+        </div>
+        <div class="kv">
+          <span class="num"><span class="count" data-to="0.691" data-dec="3">0.691</span></span><span>open-loop RPDMS of the released planner with SIA, from <b style="color:#fff">0.623</b> on the raw camera &mdash; same weights</span>
+          <span class="num"><span class="count" data-to="0.200" data-dec="3">0.200</span></span><span>vehicle mAP of the released detector on rig C with SIA alone, from <b style="color:#fff">0.041</b></span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+    <div class="section reveal" id="planning">
+    <h2 class="section-title violet">HA-RL: <span class="highlight-text">95.2%</span> Closed-Loop Success</h2>
+    <div class="section-content">
+      <p>The mismatch enters through the <b>ego state</b>, not the observation. Letting the ego state alone follow the planner's execution &mdash; on recorded target frames &mdash; recovers the closed-loop gain of generative closed-loop RL, without generating a single frame.</p>
+    </div>
+    <div class="flow">
+      <div class="flow-item">
+        <div class="flow-media"><img src="media/sia/sia_160.jpg" alt="re-rendered input" loading="lazy"></div>
+        <div class="flow-label">Step 1: re-render target cameras<br><b>(weights unchanged)</b></div>
+      </div>
+      <div class="flow-item icon"><div class="icon-container" id="icon-1"><svg viewBox="0 0 48 48" fill="none" stroke="white" stroke-width="1.6"><path d="M8 24h28M28 15l9 9-9 9"/></svg></div></div>
+      <div class="flow-item">
+        <div class="flow-media"><img src="media/frames_real4k/frame_0120.webp" alt="ordinary target driving" loading="lazy"></div>
+        <div class="flow-label">Step 2: imitation learning on ordinary target driving<br><b>(OL 0.698 → 0.784, stalls 10.0% → 0%)</b></div>
+      </div>
+      <div class="flow-item icon"><div class="icon-container" id="icon-2"><svg viewBox="0 0 48 48" fill="none" stroke="white" stroke-width="1.6"><circle cx="24" cy="24" r="13"/><path d="M24 11v4M24 33v4M11 24h4M33 24h4"/><circle cx="24" cy="24" r="3" fill="white"/></svg></div></div>
+      <div class="flow-item">
+        <div class="flow-media"><video muted loop playsinline preload="none" data-src="media/closed_loop/F02_r2r.mp4"></video></div>
+        <div class="flow-label">Step 3: HA-RL, ego state follows execution<br><b>(SR 84.4% → 95.2%, 0.9 s / rollout)</b></div>
+      </div>
+    </div>
+
+    <div class="chart-grid" style="margin-top:3rem">
+      <div class="chart-card">
+        <h4>What follows the planner's execution?</h4>
+        <div class="sub">Three RL variants from the same IL model &mdash; closed-loop success rate (%)</div>
+        <div class="chart" id="chart-follow"></div>
+      </div>
+      <div class="chart-card">
+        <h4>Cost per rollout on the same GPU</h4>
+        <div class="sub">Seconds; generative rollouts are dominated by video generation</div>
+        <div class="chart" id="chart-cost"></div>
+      </div>
+    </div>
+  </div>
+
+    <div class="section reveal" id="closed-loop">
+    <h2 class="section-title">Released vs. <span class="highlight-text">R2R</span>, Same Event, Same Start</h2>
+    <div class="section-content">
+      <p>After HA-RL, we validate the localized planner in a generative closed loop where both the ego state and the front-camera observation evolve with the policy. Each event runs for 4&nbsp;s with replanning every 0.53&nbsp;s, starting from the same real frame.</p>
+    </div>
+    <div class="event-tabs" id="event-tabs">
+      <button class="seg-btn violet on" data-e="F36">Construction zone</button>
+      <button class="seg-btn violet" data-e="F43">Lead vehicle</button>
+      <button class="seg-btn violet" data-e="F02">Roundabout</button>
+      <button class="seg-btn violet" data-e="F13">Turn</button>
+    </div>
+    <div class="pair-head"><h3 id="event-title">Construction zone</h3><span id="event-desc">The released planner cuts the turn into the parked truck; R2R slows and passes.</span></div>
+    <div class="pair" id="main-pair">
+      <div class="clip"><video muted loop playsinline preload="none" data-src="media/closed_loop/F36_released.mp4"></video><span class="tag bad" id="tag-rel">✕ Released &middot; collision</span></div>
+      <div class="clip"><video muted loop playsinline preload="none" data-src="media/closed_loop/F36_r2r.mp4"></video><span class="tag good">✓ R2R (HA-RL) &middot; success</span></div>
+    </div>
+    <div class="mini-pairs">
+      <div class="mini"><div class="two">
+        <div class="clip"><video muted loop playsinline preload="none" data-src="media/closed_loop/F22_released.mp4"></video><span class="tag bad">✕ Released</span></div>
+        <div class="clip"><video muted loop playsinline preload="none" data-src="media/closed_loop/F22_r2r.mp4"></video><span class="tag good">✓ R2R</span></div>
+      </div><div class="cap">Pedestrian crossing &middot; released planner stalls</div></div>
+      <div class="mini"><div class="two">
+        <div class="clip"><video muted loop playsinline preload="none" data-src="media/closed_loop/F23_released.mp4"></video><span class="tag bad">✕ Released</span></div>
+        <div class="clip"><video muted loop playsinline preload="none" data-src="media/closed_loop/F23_r2r.mp4"></video><span class="tag good">✓ R2R</span></div>
+      </div><div class="cap">Crosswalk with pedestrians &middot; released planner stalls</div></div>
+      <div class="mini"><div class="two">
+        <div class="clip"><video muted loop playsinline preload="none" data-src="media/closed_loop/F13_released.mp4"></video><span class="tag bad">✕ Released</span></div>
+        <div class="clip"><video muted loop playsinline preload="none" data-src="media/closed_loop/F13_r2r.mp4"></video><span class="tag good">✓ R2R</span></div>
+      </div><div class="cap">Turn &middot; released planner leaves the road</div></div>
+    </div>
+    <div class="fig-card" style="margin-top:2.6rem"><img class="zoomable" src="media/figs/fig_plan_qual.jpg" alt="qualitative planning" loading="lazy"></div>
+    <div class="fig-caption">Qualitative results after post-training in three scenes: construction, roundabout, and right turn at an intersection. Each row shows the predicted trajectory on the generated frames of the closed loop and the top view at the end of the event.</div>
+  </div>
+
+    <div class="section reveal">
+    <h2 class="section-title" style="font-size:1.8rem">Post-Training Results</h2>
+    <div class="table-scroll">
+      <table class="tbl">
+        <thead><tr><th>Training</th><th>OL ↑</th><th>SR ↑</th><th>Coll. ↓</th><th>Off ↓</th><th>Rule ↓</th><th>Stall ↓</th></tr></thead>
+        <tbody>
+          <tr><td>Released</td><td>0.698</td><td>82.2</td><td>4.4</td><td>3.3</td><td>0.0</td><td>10.0</td></tr>
+          <tr><td>IL</td><td>0.784</td><td>84.4</td><td>7.8</td><td>2.2</td><td>5.6</td><td>0.0</td></tr>
+          <tr><td>IL + RL, trajectory reward</td><td>0.809</td><td class="neg">78.1</td><td class="neg">12.2</td><td>1.9</td><td>8.9</td><td>0.0</td></tr>
+          <tr><td>IL + RL, generative closed loop</td><td>0.779</td><td>93.0</td><td>1.5</td><td>1.9</td><td>0.0</td><td>3.7</td></tr>
+          <tr class="ours"><td>IL + HA-RL (R2R)</td><td>0.785</td><td>95.2</td><td>1.9</td><td>1.5</td><td>0.0</td><td>1.5</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="callouts">
+      <div class="callout"><div class="k">Execution reward alone</div><div class="v" style="color:var(--violet)">94.4%</div><div class="d">Replacing the trajectory reward by the execution reward raises SR from 78.1%; the human anchor keeps OL at the IL level and reaches 95.2%.</div></div>
+      <div class="callout"><div class="k">IL first</div><div class="v" style="color:var(--violet)">84.8%</div><div class="d">The same RL stage on the released model reaches 84.8% with HA-RL (62.6% with the trajectory reward) &mdash; IL on target driving is needed first.</div></div>
+      <div class="callout"><div class="k">Public benchmark (NAVSIM)</div><div class="v" style="color:var(--violet)">53.9% → 90.9%</div><div class="d">Repeating IL and HA-RL on NAVSIM with EPDMS in the rewards; collisions fall from 4.4% after IL to 2.8%.</div></div>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+    <div class="section reveal" id="perception">
+    <h2 class="section-title teal">Frozen Weights, <span class="highlight-text">10&times;</span> Vehicle mAP</h2>
+    <div class="section-content">
+      <p>Released detectors keep source-sensor <b>spatial</b> and <b>temporal</b> priors even when the correct target calibration is supplied. Probes with fixed image content show where the training rig resides; R2R corrects exactly those representations from calibration &mdash; no target annotations, no gradient updates, one fixed setting per detector for all rigs.</p>
+    </div>
+    <div class="chart-card">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:1rem;flex-wrap:wrap">
+        <div><h4>Vehicle mAP on our three real rigs, public nuScenes weights frozen</h4><div class="sub">Alignment steps added in turn</div></div>
+        <div class="scene-tabs" id="det-tabs" style="margin-top:0">
+          <button class="seg-btn on" data-d="pe">Temporal position-embedding</button>
+          <button class="seg-btn" data-d="as">Sparse anchor-sampling</button>
+        </div>
+      </div>
+      <div class="chart" id="chart-rig"></div>
+      <div class="legend" id="rig-legend"></div>
+    </div>
+    <div class="callouts">
+      <div class="callout"><div class="k">Rig C, five cameras</div><div class="v" style="color:var(--teal)">0.041 → 0.420</div><div class="d">SIA gives the first large gain (0.200); TRA adds as much again.</div></div>
+      <div class="callout"><div class="k">All rigs</div><div class="v" style="color:var(--teal)">0.40–0.49</div><div class="d">Vehicle mAP after R2R: 0.40–0.48 for the position-embedding and 0.45–0.49 for the anchor-sampling detector.</div></div>
+      <div class="callout"><div class="k">Unmodified vehicle-stack node</div><div class="v" style="color:var(--teal)">0.204 → 0.477</div><div class="d">The driving stack's own detector node, unmodified, replayed on the five-camera drive.</div></div>
+    </div>
+    <div class="fig-card" style="margin-top:2.6rem"><img class="zoomable" src="media/figs/fig_det_qual.jpg" alt="qualitative detection" loading="lazy"></div>
+    <div class="fig-caption">Detections of the released and the R2R-corrected detector on our rigs, with frozen public weights.</div>
+  </div>
+
+  <div class="divider"></div>
+
+    <div class="section reveal" id="p2p">
+    <h2 class="section-title">Better Boxes, <span class="highlight-text">Fewer Crashes</span> 16 Seconds Later</h2>
+    <div class="section-content">
+      <p>The same planner (PDM-Closed) drives 16&nbsp;s in closed loop from the same recorded start on our downtown drive, replanning every 0.5&nbsp;s. Only its object input changes: the boxes of a released detector with <b style="color:var(--red)">direct transfer</b>, or with <b style="color:var(--teal)">R2R</b>. Other road users follow the recording. Pick a scene, drag the timeline, or switch the view.</p>
+    </div>
+    <div class="p2p" id="p2p-app">
+      <div class="p2p-top">
+        <div class="p2p-dets">
+          <span class="lbl">Detector</span>
+          <button class="seg-btn on" data-det="spn">StreamPETR</button>
+          <button class="seg-btn" data-det="s4d">Sparse4D</button>
+          <button class="seg-btn" data-det="t4">Vehicle-stack StreamPETR</button>
+        </div>
+        <div class="p2p-views">
+          <button class="seg-btn on" data-view="follow">Follow</button>
+          <button class="seg-btn" data-view="top">Top</button>
+          <button class="seg-btn" data-view="free">Free (drag)</button>
+        </div>
+      </div>
+      <div class="p2p-scenes" id="p2p-scenes"></div>
+      <div class="p2p-stage">
+        <canvas id="p2p-canvas"></canvas>
+        <div class="p2p-labels" id="p2p-labels"></div>
+        <div class="p2p-legend">
+          <span><i style="background:var(--red)"></i>Direct transfer</span>
+          <span><i style="background:var(--teal)"></i>R2R</span>
+          <span><i class="ln" style="border-color:#e2e8f0"></i>GT boxes as input</span>
+          <span><i class="ln dash" style="border-color:#94a3b8"></i>Recorded human drive</span>
+          <span><i class="ln" style="border-color:#b6c2d3;border-radius:2px"></i>Road users</span>
+        </div>
+        <div class="p2p-clock mono" id="p2p-clock">t = 0.0 s</div>
+        <div class="p2p-loading" id="p2p-loading">loading scene&hellip;</div>
+      </div>
+      <div class="p2p-bar">
+        <button class="p2p-btn" id="p2p-play" aria-label="play / pause"></button>
+        <div class="p2p-tl" id="p2p-tl">
+          <div class="trk"><div class="prog" id="p2p-prog"></div></div>
+          <div class="ticks"><i style="left:25%"></i><i style="left:50%"></i><i style="left:75%"></i></div>
+          <div class="nums mono"><span style="left:0">0</span><span style="left:25%">4</span><span style="left:50%">8</span><span style="left:75%">12</span><span style="left:100%">16 s</span></div>
+          <div class="marks" id="p2p-marks"></div>
+          <div class="head" id="p2p-head"></div>
+        </div>
+        <button class="p2p-btn mono" id="p2p-speed">1&times;</button>
+      </div>
+      <div class="p2p-info">
+        <div class="p2p-text">
+          <h4 id="p2p-title"></h4>
+          <div class="d" id="p2p-desc"></div>
+          <div class="seen" id="p2p-seen"></div>
+          <div class="p2p-status">
+            <div class="st" id="p2p-st-dt"><i style="background:var(--red)"></i><span class="n">Direct transfer</span><span class="v mono"></span></div>
+            <div class="st" id="p2p-st-r2r"><i style="background:var(--teal)"></i><span class="n">R2R</span><span class="v mono"></span></div>
+            <div class="st" id="p2p-st-gt"><i style="background:#e2e8f0"></i><span class="n">GT boxes</span><span class="v mono"></span></div>
+          </div>
+          <div class="p2p-toggles">
+            <label><input type="checkbox" id="p2p-show-det" checked> boxes given to the planner</label>
+            <label><input type="checkbox" id="p2p-show-gt" checked> GT-input ego</label>
+            <label><input type="checkbox" id="p2p-show-human" checked> recorded human drive</label>
+          </div>
+        </div>
+        <div class="p2p-cams">
+          <figure><canvas id="p2p-cam-dt" width="640" height="480"></canvas><figcaption><b style="color:var(--red)">Direct transfer</b> boxes on the recorded front camera</figcaption></figure>
+          <figure><canvas id="p2p-cam-r2r" width="640" height="480"></canvas><figcaption><b style="color:var(--teal)">R2R</b> boxes on the same frame &middot; dashed: the object the direct-transfer ego hits</figcaption></figure>
+        </div>
+      </div>
+    </div>
+    <div class="chart-card" style="margin-top:1.6rem">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:1rem;flex-wrap:wrap">
+        <div><h4>At-fault collisions in 16&nbsp;s closed loop, 2,132 events</h4></div>
+        <div style="display:flex;gap:.8rem;flex-wrap:wrap">
+          <div class="scene-tabs" style="margin-top:0" id="p2p-plan"><button class="seg-btn on" data-p="pdm">PDM-Closed</button><button class="seg-btn" data-p="dp">Diffusion Planner</button></div>
+        </div>
+      </div>
+      <div class="p2p-bars" id="p2p-bars"></div>
+      <div class="legend"><span><i style="background:var(--red)"></i>Direct transfer</span><span><i style="background:var(--teal)"></i>R2R</span><span><i style="background:#e2e8f0"></i>GT boxes</span></div>
+    </div>
+    <div class="fig-caption">The scenes are events where PDM-Closed collides on direct-transfer StreamPETR boxes and drives the full 16&nbsp;s on R2R boxes and on GT boxes. Over all 2,132 events, R2R lowers the collision rate of PDM-Closed for every detector, and of Diffusion Planner for the two detectors trained on nuScenes. The detectors run on the recorded camera frames, so the boxes follow the recording while the simulated ego can drive ahead of it.</div>
+  </div>
+
+    <div class="section reveal">
+    <h2 class="section-title">No Retraining, Still Ahead of Retrained Methods</h2>
+    <div class="section-content">
+      <p>On nuScenes &rarr; Waymo and nuScenes &rarr; Lyft in the protocol of CoIn3D, R2R keeps the public nuScenes weights frozen. It gives the single-frame position-embedding detector a higher NDS* than CoIn3D obtains for the same detector <b>with</b> retraining, and the anchor-sampling detector exceeds every retrained method on Lyft.</p>
+    </div>
+    <div class="chart-card">
+      <h4>NDS* of the single-frame position-embedding detector</h4>
+      <div class="chart" id="chart-dots"></div>
+      <div class="legend"><span><i style="background:#64748b"></i>Direct transfer (no retrain)</span><span><i style="background:#fbbf24"></i>CoIn3D (retrain)</span><span><i style="background:var(--teal)"></i>R2R (no retrain)</span></div>
+    </div>
+  </div>
+
+    <div class="section reveal">
+    <h2 class="section-title">Abstract</h2>
+    <div class="section-content">
+      <p>Released autonomous-driving models achieve strong benchmark performance, yet deploying them on a new real vehicle remains challenging. We study this deployment gap and find that released models can remain coupled to assumptions from their source sensing, data, and execution processes even after conventional adaptation. We introduce Released-to-Real (R2R), a deployment-localization methodology that identifies such source-system coupling and corrects only the affected components while preserving the released model. For data and behavior adaptation, we find that the mismatch between trajectory-level optimization and receding-horizon execution enters through the ego state rather than the observation, and introduce Human-Anchored Reinforcement Learning (HA-RL), which corrects it on recorded target driving without the costly rollouts of generative closed-loop reinforcement learning (RL). For physical sensor adaptation, R2R localizes and corrects source-dependent spatial and temporal representations with frozen perception weights, requiring neither target annotations nor retraining. HA-RL improves the closed-loop success rate of a released diffusion-based planner from 82.2% to 95.2%, while sensor adaptation across multiple released detectors and three real sensor rigs improves the vehicle mean average precision (mAP) of a released multi-camera detector from 0.041 to 0.420 on a five-camera target rig. These results provide a practical path for preparing released models before deployment on new real vehicles.</p>
+    </div>
+  </div>
+
+    <div class="section reveal" id="bibtex">
+    <h2 class="section-title">Citation</h2>
+    <pre class="bibtex-code" id="bib"><button class="copy-btn" id="copy-bib">Copy</button>@article{zhu2026r2r,
+  title   = {Beyond the Benchmark: Localizing Released Autonomous Driving Models to Real Vehicles},
+  author  = {Zhu, Morui and Qu, Deyuan and Chen, Qi and Yang, Qing},
+  journal = {arXiv preprint},
+  year    = {2026}
+}</pre>
+    <details class="technical-details">
+      <summary>About this page</summary>
+      <div class="technical-details-content"><ul>
+        <li>3D models, licensed under <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener">CC BY 4.0</a> and scaled, re-centred and simplified for this page: <a href="https://sketchfab.com/3d-models/tesla-m3-model-3a602469d7874d1397efa67182198705" target="_blank" rel="noopener">Tesla M3 model</a> by wintrez, <a href="https://sketchfab.com/3d-models/mercedes-e-class-w212-119c5e10733142b197aa53b86f6aeb04" target="_blank" rel="noopener">Mercedes E Class W212</a> by Peter_D, <a href="https://sketchfab.com/3d-models/vw-tiguan-2021-0a11d748fd8f4b3f9bc879aed8d6d208" target="_blank" rel="noopener">VW Tiguan 2021</a> by Hyap, <a href="https://sketchfab.com/3d-models/range-rover-sport-2018-d0820434bec045a2b141a4e1f71d192e" target="_blank" rel="noopener">Range Rover Sport (2018)</a> by Weitstern, <a href="https://sketchfab.com/3d-models/hilux-like-pick-up-truck-501c2fa5bd1a4ecd822365fa7daa8019" target="_blank" rel="noopener">Hilux-like pick-up truck</a> by matisosanimation, <a href="https://sketchfab.com/3d-models/mercedes-benz-sprinter-152f62800be34652af0545487129ca2e" target="_blank" rel="noopener">Mercedes-Benz Sprinter</a> by Savelliy 07, <a href="https://sketchfab.com/3d-models/citroen-picasso-3d-model-2fbf653e4e6c438b95a290928137cf9d" target="_blank" rel="noopener">Citroen PICASSO  3D model</a> by ziedarchi, <a href="https://sketchfab.com/3d-models/isuzu-ffr-29931659dfe84909a226a625cf5a8f75" target="_blank" rel="noopener">Isuzu FFR</a> by mekanismo, <a href="https://sketchfab.com/3d-models/marcopolo-torino-vw17-230-dbb5b344102a493185d748f1e9be9bf8" target="_blank" rel="noopener">Marcopolo Torino VW17-230</a> by FrankFkN, <a href="https://sketchfab.com/3d-models/btwin-triban-100-road-bike-1443433035054564801ca9098c7e6e9f" target="_blank" rel="noopener">B’Twin Triban 100 Road Bike</a> by Tomaso.</li>
+        <li>Pedestrian models: <a href="https://github.com/microsoft/Microsoft-Rocketbox" target="_blank" rel="noopener">Microsoft Rocketbox Avatar Library</a>, &copy; 2020 Microsoft, MIT License.</li>
+        <li>Layout adapted from the <a href="https://github.com/doorman-humanoid/doorman-humanoid.github.io" target="_blank" rel="noopener">DoorMan project page</a>.</li>
+      </ul></div>
+    </details>
+  </div>
+  <footer>&copy; 2026 the authors.</footer>
+</div>
+
+<div class="lightbox" id="lightbox"><img id="lightbox-img" alt=""></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+<script>
+gsap.registerPlugin(ScrollTrigger);
+
+const $ = id => document.getElementById(id);
+
+const isMobile = window.innerWidth <= 768;
+
+const canvas = $("background-canvas"), ctx = canvas.getContext("2d");
+
+function sizeCanvas() {
+    const dpr = isMobile ? 1 : Math.min(window.devicePixelRatio || 1, 2), maxDim = isMobile ? 1920 : 3840;
+    canvas.width = Math.min(window.innerWidth * dpr, maxDim);
+    canvas.height = Math.min(window.innerHeight * dpr, maxDim);
+    if (!isMobile) {
+        canvas.style.width = window.innerWidth + "px";
+        canvas.style.height = window.innerHeight + "px";
+    }
+}
+
+const W_ = () => canvas.width, H_ = () => canvas.height;
+
+const state = {
+    progress: 0
+};
+
+let ready = false;
+
+const SEQ = {
+    hero: null
+};
+
+function makeHero(man, step) {
+    const V = k => man[k]?.v || 0;
+    const D = `media/hero/${HERO_W()}`;
+    const parts = [ [ `${D}/f36`, F36_A, 131, "real", V("hero"), step ], [ "media/hero/1600/twin_base", 1, 447, "twin", V("hero"), 3, "media/hero/1920/twin_ov" ], [ `${D}/f36`, 132, F36_B, "real", V("hero"), step ] ];
+    const list = [];
+    for (const [dir, a, b, kind, v, st, ov] of parts) {
+        for (let i = a; i <= b; i += st) list.push([ dir, i, kind, v, ov ]);
+        if ((b - a) % st) list.push([ dir, b, kind, v, ov ]);
+    }
+    return {
+        list: list,
+        blobs: list.map((() => null)),
+        oblobs: list.map((() => null)),
+        n: list.length,
+        seg: parts.map((([, a, b]) => b - a + 1))
+    };
+}
+
+const src = (s, i, ov = false) => `${s.list[i][ov ? 4 : 0]}/frame_${String(s.list[i][1]).padStart(4, "0")}.avif?v=${s.list[i][3] || 0}`;
+
+const HERO_W = () => canvas.width > 2100 ? 3840 : 1920;
+
+const BUDGET = 2e8, NDEC = 6, BMP = new Map, BUSY = new Set;
+
+let curI = 0, dirI = 1, shown = -1;
+
+let AHEAD = 10, BEHIND = 5;
+
+function sizeWindow() {
+    const n = Math.max(6, Math.min(16, Math.floor(BUDGET / (HERO_W() * HERO_W() * 9 / 16 * 4 * 1.6))));
+    AHEAD = Math.ceil(n * 2 / 3);
+    BEHIND = n - AHEAD;
+}
+
+const hasBlob = (s, j) => s.blobs[j] && (!s.list[j][4] || s.oblobs[j]);
+
+const pastHero = () => state.progress >= .999;
+
+const win = () => pastHero() ? [ curI, curI ] : dirI > 0 ? [ curI - BEHIND, curI + AHEAD ] : [ curI - AHEAD, curI + BEHIND ];
+
+const drop = b => b && b.forEach((x => x && x.close && x.close()));
+
+function nearestDecoded(s, i) {
+    for (let d = 0; d < s.n; d++) for (const j of [ i - d, i + d ]) if (BMP.has(j)) return j;
+    return -1;
+}
+
+function schedule(s, i) {
+    if (i !== curI) {
+        dirI = i > curI ? 1 : -1;
+        curI = i;
+    }
+    const [lo, hi] = win();
+    for (const [j, b] of BMP) if ((j < lo || j > hi) && j !== shown) {
+        drop(b);
+        BMP.delete(j);
+    }
+    for (let d = 0; d <= AHEAD && BUSY.size < NDEC; d++) for (const j of [ i + dirI * d, i - dirI * d ]) {
+        if (j < lo || j > hi || j < 0 || j >= s.n || BMP.has(j) || BUSY.has(j) || !hasBlob(s, j) || BUSY.size >= NDEC) continue;
+        BUSY.add(j);
+        Promise.all([ createImageBitmap(s.blobs[j]), s.oblobs[j] ? createImageBitmap(s.oblobs[j]) : null ]).then((b => {
+            const [a, z] = win();
+            if (j >= a && j <= z) {
+                BMP.set(j, b);
+                redraw();
+            } else drop(b);
+        }), (() => {
+            s.blobs[j] = null;
+        })).finally((() => {
+            BUSY.delete(j);
+            schedule(s, curI);
+        }));
+    }
+}
+
+let rq = 0;
+
+const redraw = () => {
+    if (ready && !rq) rq = requestAnimationFrame((() => {
+        rq = 0;
+        render();
+    }));
+};
+
+function cover(c, img, alpha = 1, zoom = 1) {
+    if (!img || alpha <= 0) return;
+    const cw = c.canvas.width, ch = c.canvas.height, ir = img.width / img.height;
+    let w, h;
+    if (ir > cw / ch) {
+        h = ch;
+        w = h * ir;
+    } else {
+        w = cw;
+        h = w / ir;
+    }
+    w *= zoom;
+    h *= zoom;
+    c.globalAlpha = alpha;
+    c.drawImage(img, (cw - w) / 2, (ch - h) / 2, w, h);
+    c.globalAlpha = 1;
+}
+
+const clamp01 = t => t < 0 ? 0 : t > 1 ? 1 : t, ease = t => {
+    t = clamp01(t);
+    return t * t * (3 - 2 * t);
+};
+
+const GLYPHS = "ｱｲｳｴｵｶｷｸｹｺｻｼｽｾｿﾀﾁﾂﾃﾄﾅﾆﾇﾈﾉﾊﾋﾌﾍﾎﾏﾐﾑﾒﾓﾔﾕﾖﾗﾘﾙﾚﾛﾜﾝ0123456789R2RΣλ∆<>/=+*";
+
+const F36_A = 61, F36_B = 164;
+
+const PARTS = [ [ 0, .1499 ], [ .1499, .8187 ], [ .8187, .8501 ] ];
+
+const post = p => PARTS[2][1] + (p - .87) * 660 / 572;
+
+const TWIN_DUR = 18.6;
+
+const twinT = p => clamp01((p - PARTS[1][0]) / (PARTS[1][1] - PARTS[1][0])) * TWIN_DUR;
+
+const pAtTwin = t => PARTS[1][0] + t / TWIN_DUR * (PARTS[1][1] - PARTS[1][0]);
+
+let partStart = [ 0, 0, 0 ], partLen = [ 0, 0, 0 ];
+
+function indexAt(p) {
+    for (let k = 0; k < 3; k++) {
+        const [a, b] = PARTS[k];
+        if (p <= b || k === 2) {
+            const f = clamp01((p - a) / (b - a));
+            return partStart[k] + Math.round(f * (partLen[k] - 1));
+        }
+    }
+}
+
+const chip = $("world-chip");
+
+let chipState = "";
+
+function setChip(w) {
+    if (w === chipState) return;
+    chipState = w;
+    chip.classList.toggle("sim", w === "twin");
+    chip.classList.toggle("loop", w === "loop");
+    const name = {
+        real: "REAL",
+        twin: "DIGITAL TWIN",
+        loop: "CLOSED LOOP"
+    }[w];
+    const sub = {
+        real: "our vehicle · front camera",
+        twin: "rebuilt from our LiDAR + five cameras",
+        loop: "same start · released vs R2R"
+    }[w];
+    scramble($("world-name"), name, 380);
+    $("world-sub").textContent = sub;
+}
+
+function render() {
+    if (!ready) return;
+    const p = state.progress, S = SEQ.hero, i = indexAt(p);
+    schedule(S, i);
+    const j = nearestDecoded(S, i);
+    ctx.fillStyle = "#000";
+    ctx.fillRect(0, 0, W_(), H_());
+    if (j >= 0) {
+        const [b, o] = BMP.get(j);
+        cover(ctx, b);
+        if (o) cover(ctx, o);
+        shown = j;
+    }
+    $("scroll-rail-fill").style.height = (p * 100).toFixed(1) + "%";
+    const t = twinT(p), inTwin = p > PARTS[1][0] && p < PARTS[1][1];
+    setChip(!inTwin ? "real" : t < .6 || t > 18.1 ? "real" : t > 5.8 && t < 15.8 ? "loop" : "twin");
+    const fr = p < PARTS[1][0] ? F36_A + (131 - F36_A) * clamp01(p / PARTS[0][1]) : p < PARTS[1][1] ? 131 : 131 + (F36_B - 131) * clamp01((p - PARTS[2][0]) / (PARTS[2][1] - PARTS[2][0]));
+}
+
+function onProgress() {
+    render();
+}
+
+const SCR = "01<>/\\|=+*#ｱｶｻﾀﾅﾊﾏﾔﾗﾜΣλ∆";
+
+function scramble(el, text, dur = 900) {
+    if (!el) return;
+    const t0 = performance.now();
+    el._scr = t0;
+    const tick = () => {
+        if (el._scr !== t0) return;
+        const f = clamp01((performance.now() - t0) / dur);
+        const n = Math.floor(f * text.length);
+        let out = "";
+        for (let i = 0; i < text.length; i++) {
+            const ch = text[i];
+            if (i < n || ch === " " || ch === "," || ch === ".") out += ch; else out += `<span class="sc">${SCR[Math.floor(Math.random() * SCR.length)]}</span>`;
+        }
+        el.innerHTML = out;
+        if (f < 1) requestAnimationFrame(tick); else el.textContent = text;
+    };
+    tick();
+}
+
+let rainRaf = 0;
+
+function loadingRain() {
+    const c = $("loading-rain");
+    if (!c) return;
+    const x = c.getContext("2d");
+    c.width = innerWidth;
+    c.height = innerHeight;
+    const cw = 18, n = Math.ceil(c.width / cw), heads = Array.from({
+        length: n
+    }, (() => Math.random() * -c.height));
+    x.font = '16px "JetBrains Mono", monospace';
+    const step = () => {
+        x.fillStyle = "rgba(5,6,8,.18)";
+        x.fillRect(0, 0, c.width, c.height);
+        heads.forEach(((y, i) => {
+            x.fillStyle = Math.random() < .08 ? "#e6fff6" : "#22c79a";
+            x.fillText(GLYPHS[Math.floor(Math.random() * GLYPHS.length)], i * cw, y);
+            heads[i] = y > c.height + Math.random() * 400 ? 0 : y + cw;
+        }));
+        rainRaf = requestAnimationFrame(step);
+    };
+    step();
+}
+
+async function boot() {
+    loadingRain();
+    let man = {};
+    try {
+        man = await (await fetch("media/sequences.json", {
+            cache: "no-cache"
+        })).json();
+    } catch (e) {}
+    const step = isMobile ? 4 : 2;
+    sizeCanvas();
+    SEQ.hero = makeHero(man, step);
+    sizeWindow();
+    {
+        let k = 0, cur = -1;
+        SEQ.hero.list.forEach((([dir, , kind], i) => {
+            const part = i === 0 ? 0 : SEQ.hero.list[i - 1][0] !== dir ? k + 1 : k;
+            if (part !== cur) {
+                k = part;
+                cur = part;
+                partStart[k] = i;
+            }
+            partLen[k] = i - partStart[k] + 1;
+        }));
+    }
+    sizeCanvas();
+    let lastW = window.innerWidth, rt;
+    window.addEventListener("resize", (() => {
+        clearTimeout(rt);
+        rt = setTimeout((() => {
+            if (window.innerWidth <= 768 && window.innerWidth === lastW) return;
+            lastW = window.innerWidth;
+            sizeCanvas();
+            sizeWindow();
+            render();
+        }), 200);
+    }));
+    const S = SEQ.hero, order = [], seen = new Set;
+    for (const k of [ 8, 4, 2, 1 ]) for (let i = 0; i < S.n; i += k) if (!seen.has(i)) {
+        seen.add(i);
+        order.push([ S, i ]);
+    }
+    if (!seen.has(S.n - 1)) order.push([ S, S.n - 1 ]);
+    const first = order.filter((([, i]) => i % 8 === 0 || i === S.n - 1)), rest = order.filter((o => !first.includes(o)));
+    let done = 0;
+    const bar = $("loading-bar");
+    const one = (s, i, ov, tries = 0) => fetch(src(s, i, ov) + (tries ? `&r=${tries}` : "")).then((r => {
+        if (!r.ok) throw r.status;
+        return r.blob();
+    })).then((b => {
+        (ov ? s.oblobs : s.blobs)[i] = b;
+    }), (() => tries < 2 ? new Promise((r => setTimeout(r, 800 * (tries + 1)))).then((() => one(s, i, ov, tries + 1))) : null));
+    const load = (s, i, count) => Promise.all([ one(s, i, false), s.list[i][4] ? one(s, i, true) : null ]).then((() => {
+        if (ready) schedule(s, curI);
+        if (count) {
+            done++;
+            bar.style.width = 100 * done / first.length + "%";
+        }
+    }));
+    const pool = async (list, n, count) => {
+        let k = 0;
+        await Promise.all(Array.from({
+            length: n
+        }, (async () => {
+            while (k < list.length) {
+                const [s, i] = list[k++];
+                await load(s, i, count);
+            }
+        })));
+    };
+    await pool(first, 8, true);
+    ready = true;
+    render();
+    await new Promise((r => {
+        const t0 = performance.now(), t = () => BMP.has(0) || performance.now() - t0 > 3e3 ? r() : setTimeout(t, 30);
+        t();
+    }));
+    setTimeout((() => {
+        const ls = $("loading-screen");
+        ls.classList.add("hidden");
+        setTimeout((() => {
+            ls.style.display = "none";
+            cancelAnimationFrame(rainRaf);
+        }), 800);
+        intro();
+    }), 250);
+    gsap.to(state, {
+        progress: 1,
+        ease: "none",
+        onUpdate: onProgress,
+        scrollTrigger: {
+            trigger: ".content",
+            start: "top top",
+            end: "bottom bottom",
+            scrub: .4
+        }
+    });
+    pool(rest, 6, false).then((() => render()));
+    heroOverlays();
+}
+
+function st(start, end) {
+    return {
+        trigger: ".content",
+        start: start,
+        end: end,
+        scrub: true
+    };
+}
+
+const pr = p => `${(p * 100).toFixed(2)}% top`;
+
+function intro() {
+    scramble($("t1a"), "Released Models,", 1e3);
+    setTimeout((() => scramble($("t1b"), "Real Vehicles", 900)), 380);
+    gsap.fromTo("#title-section .subtitle", {
+        opacity: 0,
+        x: -16
+    }, {
+        opacity: .92,
+        x: 0,
+        duration: 1,
+        delay: 1.1
+    });
+    gsap.fromTo("#title-section .vertical-bar", {
+        scaleY: 0,
+        transformOrigin: "top"
+    }, {
+        scaleY: 1,
+        duration: .9,
+        ease: "power3.out"
+    });
+    gsap.to("#scroll-indicator .si-in", {
+        opacity: 1,
+        duration: 1,
+        delay: 1.6
+    });
+}
+
+function heroOverlays() {
+    const hp = p => {
+        const c = document.querySelector(".content");
+        return p * (c.offsetHeight - innerHeight);
+    };
+    const at = (p0, p1) => ({
+        trigger: document.body,
+        start: () => hp(p0),
+        end: () => hp(p1),
+        scrub: true
+    });
+    gsap.to("#scroll-indicator", {
+        opacity: 0,
+        scrollTrigger: at(.005, .03)
+    });
+    gsap.to("#title-section", {
+        opacity: 0,
+        x: -40,
+        scrollTrigger: at(.035, .085)
+    });
+    gsap.to([ "#scroll-rail", "#world-chip" ], {
+        opacity: 1,
+        scrollTrigger: at(.01, .04)
+    });
+    gsap.to([ "#scroll-rail", "#world-chip" ], {
+        opacity: 0,
+        immediateRender: false,
+        scrollTrigger: at(post(.95), post(.99))
+    });
+    gsap.set("#title-split", {
+        opacity: 0
+    });
+    const ACTS = [ [ 5.9, 9.2, "Released Planner.", "Collision.", "Closed loop in a twin of the real street: the released planner cuts the turn into the parked truck." ], [ 9.5, 12.7, "38 Futures.", "One Reward.", "The same start in closed loop, driven by 38 policies from our post-training runs. The HA-RL reward scores each executed path; the 13 that hit the parked van score zero." ], [ 12.8, 15.9, "R2R.", "Passes.", "After post-training, R2R slows down in the turn and passes the truck." ] ];
+    const showAct = A => {
+        gsap.to("#title-split", {
+            opacity: 1,
+            duration: .4,
+            overwrite: true
+        });
+        scramble($("ts1"), A[2], 600);
+        setTimeout((() => scramble($("ts2"), A[3], 600)), 220);
+        $("ts3").textContent = A[4];
+    };
+    for (const A of ACTS) ScrollTrigger.create({
+        trigger: document.body,
+        start: () => hp(pAtTwin(A[0])),
+        end: () => hp(pAtTwin(A[1])),
+        onEnter: () => showAct(A),
+        onEnterBack: () => showAct(A),
+        onLeave: () => gsap.to("#title-split", {
+            opacity: 0,
+            duration: .25,
+            overwrite: true
+        }),
+        onLeaveBack: () => gsap.to("#title-split", {
+            opacity: 0,
+            duration: .25,
+            overwrite: true
+        })
+    });
+    gsap.to("#dark-overlay", {
+        opacity: 1,
+        scrollTrigger: at(post(.865), post(.885))
+    });
+    gsap.set("#title-section-2", {
+        opacity: 0
+    });
+    gsap.to("#title-section-2", {
+        opacity: 1,
+        scrollTrigger: {
+            ...at(post(.87), post(.89)),
+            onEnter: () => {
+                scramble($("t2a"), "Localize the Coupling.", 800);
+                setTimeout((() => scramble($("t2b"), "Correct Only What Breaks.", 900)), 250);
+            }
+        }
+    });
+    gsap.to("#video-container", {
+        opacity: 1,
+        scrollTrigger: {
+            ...at(post(.88), post(.9)),
+            onEnter: heroVideos(true),
+            onLeaveBack: heroVideos(false)
+        }
+    });
+    gsap.to([ "#title-section-2", "#video-container" ], {
+        opacity: 0,
+        immediateRender: false,
+        scrollTrigger: at(post(.95), post(.99))
+    });
+    gsap.to("#content-shade", {
+        opacity: 1,
+        scrollTrigger: {
+            trigger: "#static-sections",
+            start: "top 95%",
+            end: "top 15%",
+            scrub: true
+        }
+    });
+}
+
+function heroVideos(on) {
+    return () => {
+        const vc = $("video-container");
+        vc.classList.toggle("live", on);
+        vc.querySelectorAll("video").forEach((v => {
+            if (on) {
+                ensureSrc(v);
+                v.currentTime = 0;
+                v.play().catch((() => {}));
+            } else v.pause();
+        }));
+    };
+}
+
+ScrollTrigger.create({
+    trigger: "#static-sections",
+    start: "top 90px",
+    onEnter: () => document.body.classList.add("past-hero"),
+    onLeaveBack: () => document.body.classList.remove("past-hero")
+});
+
+[ [ "#planning", "nav-planning" ], [ "#perception", "nav-perception" ] ].forEach((([sel, id]) => ScrollTrigger.create({
+    trigger: sel,
+    start: "top 50%",
+    end: "bottom 50%",
+    onToggle: s => $(id).classList.toggle("active", s.isActive)
+})));
+
+$("nav-home").addEventListener("click", (e => {
+    e.preventDefault();
+    window.scrollTo({
+        top: 0,
+        behavior: "smooth"
+    });
+}));
+
+$("nav-paper").addEventListener("click", (e => {
+    e.preventDefault();
+    $("paper-top").scrollIntoView({
+        behavior: "smooth"
+    });
+}));
+
+for (const id of [ "nav-planning", "nav-perception" ]) $(id).addEventListener("click", (e => {
+    e.preventDefault();
+    document.querySelector($(id).getAttribute("href")).scrollIntoView({
+        behavior: "smooth"
+    });
+}));
+
+document.querySelectorAll(".reveal").forEach((el => gsap.to(el, {
+    opacity: 1,
+    y: 0,
+    duration: .9,
+    ease: "power2.out",
+    scrollTrigger: {
+        trigger: el,
+        start: "top 88%"
+    }
+})));
+
+document.querySelectorAll(".count").forEach((el => {
+    const to = parseFloat(el.dataset.to), dec = +el.dataset.dec, suf = el.dataset.suf || "", o = {
+        v: 0
+    };
+    ScrollTrigger.create({
+        trigger: el,
+        start: "top 92%",
+        once: true,
+        onEnter: () => gsap.to(o, {
+            v: to,
+            duration: 1.6,
+            ease: "power3.out",
+            onUpdate: () => el.textContent = o.v.toFixed(dec) + suf
+        })
+    });
+}));
+
+function ensureSrc(v) {
+    if (!v.src && v.dataset.src) {
+        v.src = v.dataset.src;
+        v.load();
+    }
+}
+
+const vObs = new IntersectionObserver((ents => ents.forEach((e => {
+    const v = e.target;
+    if (v.closest("#video-container")) return;
+    if (e.isIntersecting) {
+        ensureSrc(v);
+        v.play().catch((() => {}));
+    } else v.pause();
+}))), {
+    threshold: .25
+});
+
+document.querySelectorAll("video[data-src]").forEach((v => vObs.observe(v)));
+
+function syncPair(root) {
+    const [a, b] = root.querySelectorAll("video");
+    if (!a || !b) return;
+    let last = 0;
+    a.addEventListener("timeupdate", (() => {
+        if (a.currentTime < last) {
+            b.currentTime = a.currentTime;
+        } else if (Math.abs(b.currentTime - a.currentTime) > .15) b.currentTime = a.currentTime;
+        last = a.currentTime;
+    }));
+}
+
+document.querySelectorAll(".pair, .mini .two, #video-container").forEach(syncPair);
+
+ScrollTrigger.create({
+    trigger: "#glitch-lower",
+    start: "top 85%",
+    onEnter: () => {
+        const g = $("glitch-lower");
+        let n = 0;
+        const t = setInterval((() => {
+            g.classList.remove("glitch");
+            void g.offsetWidth;
+            g.classList.add("glitch");
+            if (++n > 4) clearInterval(t);
+        }), 420);
+    }
+});
+
+gsap.to("#icon-1 svg", {
+    x: 6,
+    repeat: -1,
+    yoyo: true,
+    duration: .9,
+    ease: "sine.inOut"
+});
+
+gsap.to("#icon-2 svg", {
+    rotate: 360,
+    repeat: -1,
+    duration: 6,
+    ease: "none",
+    transformOrigin: "50% 50%"
+});
+
+(function() {
+    const box = $("compare"), top = $("cmp-sia"), h = $("cmp-handle");
+    let drag = false;
+    const set = x => {
+        const r = box.getBoundingClientRect();
+        const f = Math.max(0, Math.min(1, (x - r.left) / r.width));
+        top.style.clipPath = `inset(0 0 0 ${f * 100}%)`;
+        h.style.left = f * 100 + "%";
+    };
+    box.addEventListener("pointerdown", (e => {
+        drag = true;
+        set(e.clientX);
+        box.setPointerCapture(e.pointerId);
+    }));
+    box.addEventListener("pointermove", (e => {
+        if (drag) set(e.clientX);
+    }));
+    box.addEventListener("pointerup", (() => drag = false));
+    ScrollTrigger.create({
+        trigger: box,
+        start: "top 75%",
+        once: true,
+        onEnter: () => {
+            const o = {
+                f: .5
+            };
+            gsap.timeline().to(o, {
+                f: .18,
+                duration: .9,
+                ease: "power2.inOut",
+                onUpdate: () => set(box.getBoundingClientRect().left + o.f * box.getBoundingClientRect().width)
+            }).to(o, {
+                f: .5,
+                duration: .9,
+                ease: "power2.inOut",
+                onUpdate: () => set(box.getBoundingClientRect().left + o.f * box.getBoundingClientRect().width)
+            });
+        }
+    });
+    $("cmp-tabs").querySelectorAll("button").forEach((b => b.addEventListener("click", (() => {
+        $("cmp-tabs").querySelectorAll("button").forEach((x => x.classList.toggle("on", x === b)));
+        $("cmp-raw").src = `media/sia/raw_${b.dataset.t}.jpg`;
+        top.src = `media/sia/sia_${b.dataset.t}.jpg`;
+    }))));
+})();
+
+const EVENTS = {
+    F36: [ "Construction zone", "The released planner cuts the turn into the parked truck; R2R slows and passes.", "✕ Released · collision" ],
+    F43: [ "Lead vehicle", "The released planner runs into the vehicle ahead; R2R keeps its distance.", "✕ Released · collision" ],
+    F02: [ "Roundabout", "The released planner leaves the drivable area in the roundabout; R2R stays on the road.", "✕ Released · off-road" ],
+    F13: [ "Turn", "The released planner cuts the turn and leaves the road; R2R completes it.", "✕ Released · off-road" ]
+};
+
+$("event-tabs").querySelectorAll("button").forEach((b => b.addEventListener("click", (() => {
+    $("event-tabs").querySelectorAll("button").forEach((x => x.classList.toggle("on", x === b)));
+    const e = b.dataset.e, [t, d, tag] = EVENTS[e];
+    $("event-title").textContent = t;
+    $("event-desc").textContent = d;
+    $("tag-rel").textContent = tag;
+    const [va, vb] = $("main-pair").querySelectorAll("video");
+    va.src = `media/closed_loop/${e}_released.mp4`;
+    vb.src = `media/closed_loop/${e}_r2r.mp4`;
+    Promise.all([ va, vb ].map((v => new Promise((r => {
+        v.oncanplay = r;
+        v.load();
+    }))))).then((() => {
+        va.currentTime = vb.currentTime = 0;
+        va.play();
+        vb.play();
+    }));
+}))));
+
+document.querySelectorAll(".zoomable").forEach((img => img.addEventListener("click", (() => {
+    $("lightbox-img").src = img.src;
+    $("lightbox").classList.add("on");
+}))));
+
+$("lightbox").addEventListener("click", (() => $("lightbox").classList.remove("on")));
+
+$("copy-bib").addEventListener("click", (() => {
+    const t = $("bib").textContent.replace("Copy", "").trim();
+    navigator.clipboard?.writeText(t);
+    $("copy-bib").textContent = "Copied";
+    setTimeout((() => $("copy-bib").textContent = "Copy"), 1500);
+}));
+
+const VIOLET = "#a78bfa", TEAL = "#2dd4bf", AMBER = "#fbbf24", RED = "#f87171", SLATE = "#64748b";
+
+function onView(sel, fn) {
+    ScrollTrigger.create({
+        trigger: sel,
+        start: "top 80%",
+        once: true,
+        onEnter: fn
+    });
+}
+
+function svgFor(sel, W, H) {
+    return d3.select(sel).append("svg").attr("viewBox", `0 0 ${W} ${H}`).attr("preserveAspectRatio", "xMidYMid meet");
+}
+
+function defs(svg) {
+    const d = svg.append("defs");
+    const g = d.append("linearGradient").attr("id", "gv").attr("x1", 0).attr("y1", 0).attr("x2", 0).attr("y2", 1);
+    g.append("stop").attr("offset", 0).attr("stop-color", "#c4b5fd");
+    g.append("stop").attr("offset", 1).attr("stop-color", "#6d5bd0");
+    const t = d.append("linearGradient").attr("id", "gt").attr("x1", 0).attr("y1", 0).attr("x2", 0).attr("y2", 1);
+    t.append("stop").attr("offset", 0).attr("stop-color", "#5eead4");
+    t.append("stop").attr("offset", 1).attr("stop-color", "#0f9f8c");
+    const r = d.append("linearGradient").attr("id", "gr").attr("x1", 0).attr("y1", 0).attr("x2", 0).attr("y2", 1);
+    r.append("stop").attr("offset", 0).attr("stop-color", "#fca5a5");
+    r.append("stop").attr("offset", 1).attr("stop-color", "#b91c1c");
+}
+
+(function() {
+    const D = [ [ "Released", .698, 82.2 ], [ "IL", .784, 84.4 ], [ "IL + RL\ntraj. reward", .809, 78.1 ], [ "IL + RL\ngen. closed loop", .779, 93 ], [ "IL + HA-RL\n(R2R)", .785, 95.2 ] ];
+    const W = 640, H = 330, m = {
+        l: 46,
+        r: 52,
+        t: 26,
+        b: 58
+    }, svg = svgFor("#chart-olsr", W, H);
+    defs(svg);
+    const x = d3.scaleBand().domain(D.map((d => d[0]))).range([ m.l, W - m.r ]).padding(.38);
+    const y = d3.scaleLinear().domain([ 70, 100 ]).range([ H - m.b, m.t ]), y2 = d3.scaleLinear().domain([ .6, .85 ]).range([ H - m.b, m.t ]);
+    svg.append("g").attr("class", "grid").attr("transform", `translate(${m.l},0)`).call(d3.axisLeft(y).ticks(6).tickSize(-(W - m.l - m.r)).tickFormat("")).call((g => g.select(".domain").remove()));
+    svg.append("g").attr("class", "axis").attr("transform", `translate(${m.l},0)`).call(d3.axisLeft(y).ticks(6).tickFormat((d => d + "%")));
+    svg.append("g").attr("class", "axis").attr("transform", `translate(${W - m.r},0)`).call(d3.axisRight(y2).ticks(5).tickFormat(d3.format(".2f"))).selectAll("text").attr("fill", AMBER);
+    const xa = svg.append("g").attr("class", "axis").attr("transform", `translate(0,${H - m.b})`).call(d3.axisBottom(x).tickSize(0));
+    xa.selectAll("text").each((function(d) {
+        const t = d3.select(this), L = d.split("\n");
+        t.text("");
+        L.forEach(((l, i) => t.append("tspan").attr("x", 0).attr("dy", i ? "1.15em" : "1.1em").text(l)));
+    })).attr("font-size", 11);
+    const fill = d => d[0].startsWith("IL + HA") ? "url(#gv)" : d[0].includes("traj") ? "url(#gr)" : "rgba(167,139,250,.35)";
+    const bars = svg.selectAll(".bar").data(D).enter().append("rect").attr("x", (d => x(d[0]))).attr("width", x.bandwidth()).attr("rx", 5).attr("y", y(70)).attr("height", 0).attr("fill", fill);
+    const lbl = svg.selectAll(".bl").data(D).enter().append("text").attr("x", (d => x(d[0]) + x.bandwidth() / 2)).attr("y", (d => y(d[2]) - 8)).attr("text-anchor", "middle").attr("font-size", 12).attr("font-weight", 700).attr("fill", "#fff").attr("opacity", 0).text((d => d[2].toFixed(1)));
+    const line = d3.line().x((d => x(d[0]) + x.bandwidth() / 2)).y((d => y2(d[1]))).curve(d3.curveMonotoneX);
+    const path = svg.append("path").datum(D).attr("fill", "none").attr("stroke", AMBER).attr("stroke-width", 2.5).attr("d", line);
+    const len = path.node().getTotalLength();
+    path.attr("stroke-dasharray", len).attr("stroke-dashoffset", len);
+    const dots = svg.selectAll(".dt").data(D).enter().append("circle").attr("cx", (d => x(d[0]) + x.bandwidth() / 2)).attr("cy", (d => y2(d[1]))).attr("r", 0).attr("fill", "#0b0d10").attr("stroke", AMBER).attr("stroke-width", 2.2);
+    const ann = svg.append("g").attr("opacity", 0), tx = x(D[2][0]) + x.bandwidth() / 2;
+    ann.append("text").attr("x", tx).attr("y", y2(.809) - 14).attr("text-anchor", "middle").attr("font-size", 11).attr("fill", AMBER).text("highest OL");
+    ann.append("text").attr("x", tx).attr("y", y(78.1) + 18).attr("text-anchor", "middle").attr("font-size", 11).attr("fill", "#fecaca").text("lowest SR");
+    onView("#chart-olsr", (() => {
+        bars.transition().duration(1100).delay(((d, i) => i * 140)).ease(d3.easeCubicOut).attr("y", (d => y(d[2]))).attr("height", (d => y(70) - y(d[2])));
+        lbl.transition().delay(((d, i) => 600 + i * 140)).duration(400).attr("opacity", 1);
+        path.transition().delay(500).duration(1600).ease(d3.easeCubicInOut).attr("stroke-dashoffset", 0);
+        dots.transition().delay(((d, i) => 600 + i * 300)).duration(300).attr("r", 5);
+        ann.transition().delay(2100).duration(500).attr("opacity", 1);
+    }));
+})();
+
+(function() {
+    const D = [ [ "Released", .18 ], [ "IL", .64 ], [ "IL + RL, traj. reward", .7 ], [ "IL + HA-RL (R2R)", -.07 ] ];
+    const W = 460, H = 250, m = {
+        l: 150,
+        r: 46,
+        t: 10,
+        b: 34
+    }, svg = svgFor("#chart-offset", W, H);
+    defs(svg);
+    const x = d3.scaleLinear().domain([ -.2, .8 ]).range([ m.l, W - m.r ]), y = d3.scaleBand().domain(D.map((d => d[0]))).range([ m.t, H - m.b ]).padding(.32);
+    svg.append("g").attr("class", "grid").attr("transform", `translate(0,${H - m.b})`).call(d3.axisBottom(x).ticks(5).tickSize(-(H - m.t - m.b)).tickFormat("")).call((g => g.select(".domain").remove()));
+    svg.append("g").attr("class", "axis").attr("transform", `translate(0,${H - m.b})`).call(d3.axisBottom(x).ticks(5).tickFormat((d => (d > 0 ? "+" : "") + d)));
+    svg.append("line").attr("x1", x(0)).attr("x2", x(0)).attr("y1", m.t).attr("y2", H - m.b).attr("stroke", "rgba(255,255,255,.5)");
+    svg.selectAll(".yl").data(D).enter().append("text").attr("x", m.l - 10).attr("y", (d => y(d[0]) + y.bandwidth() / 2 + 4)).attr("text-anchor", "end").attr("font-size", 12).attr("fill", (d => d[0].includes("HA") ? "#ede9fe" : "rgba(244,246,248,.78)")).attr("font-weight", (d => d[0].includes("HA") ? 700 : 400)).text((d => d[0]));
+    const b = svg.selectAll(".b").data(D).enter().append("rect").attr("y", (d => y(d[0]))).attr("height", y.bandwidth()).attr("rx", 4).attr("x", x(0)).attr("width", 0).attr("fill", (d => d[1] < 0 ? VIOLET : d[1] > .5 ? RED : "rgba(248,113,113,.45)"));
+    const t = svg.selectAll(".t").data(D).enter().append("text").attr("y", (d => y(d[0]) + y.bandwidth() / 2 + 4)).attr("font-size", 12).attr("font-weight", 700).attr("fill", "#fff").attr("opacity", 0).attr("x", (d => d[1] < 0 ? x(d[1]) - 6 : x(d[1]) + 6)).attr("text-anchor", (d => d[1] < 0 ? "end" : "start")).text((d => (d[1] > 0 ? "+" : "") + d[1].toFixed(2)));
+    onView("#chart-offset", (() => {
+        b.transition().duration(1e3).delay(((d, i) => i * 160)).ease(d3.easeCubicOut).attr("x", (d => Math.min(x(0), x(d[1])))).attr("width", (d => Math.abs(x(d[1]) - x(0))));
+        t.transition().delay(((d, i) => 700 + i * 160)).duration(400).attr("opacity", 1);
+    }));
+})();
+
+(function() {
+    const D = [ [ "Nothing", "trajectory reward", 78.1, RED ], [ "Ego state + camera", "generative closed loop", 93, "#7c6fd6" ], [ "Ego state only", "HA-RL (R2R)", 95.2, VIOLET ] ];
+    const W = 560, H = 230, m = {
+        l: 168,
+        r: 60,
+        t: 8,
+        b: 30
+    }, svg = svgFor("#chart-follow", W, H);
+    const x = d3.scaleLinear().domain([ 60, 100 ]).range([ m.l, W - m.r ]), y = d3.scaleBand().domain(D.map((d => d[0]))).range([ m.t, H - m.b ]).padding(.3);
+    svg.append("g").attr("class", "grid").attr("transform", `translate(0,${H - m.b})`).call(d3.axisBottom(x).ticks(4).tickSize(-(H - m.t - m.b)).tickFormat("")).call((g => g.select(".domain").remove()));
+    svg.append("g").attr("class", "axis").attr("transform", `translate(0,${H - m.b})`).call(d3.axisBottom(x).ticks(4).tickFormat((d => d + "%")));
+    const lab = svg.selectAll(".yl").data(D).enter().append("g").attr("transform", (d => `translate(${m.l - 12},${y(d[0]) + y.bandwidth() / 2})`));
+    lab.append("text").attr("text-anchor", "end").attr("font-size", 13).attr("font-weight", 600).attr("fill", "#fff").attr("dy", -2).text((d => d[0]));
+    lab.append("text").attr("text-anchor", "end").attr("font-size", 11).attr("dy", 13).attr("fill", "rgba(244,246,248,.5)").text((d => d[1]));
+    const b = svg.selectAll(".b").data(D).enter().append("rect").attr("x", x(60)).attr("y", (d => y(d[0]))).attr("height", y.bandwidth()).attr("rx", 5).attr("width", 0).attr("fill", (d => d[3]));
+    const t = svg.selectAll(".t").data(D).enter().append("text").attr("y", (d => y(d[0]) + y.bandwidth() / 2 + 5)).attr("x", (d => x(d[2]) + 8)).attr("font-size", 14).attr("font-weight", 700).attr("fill", "#fff").attr("opacity", 0).text((d => d[2].toFixed(1) + "%"));
+    onView("#chart-follow", (() => {
+        b.transition().duration(1100).delay(((d, i) => i * 180)).ease(d3.easeCubicOut).attr("width", (d => x(d[2]) - x(60)));
+        t.transition().delay(((d, i) => 800 + i * 180)).duration(400).attr("opacity", 1);
+    }));
+})();
+
+(function() {
+    const D = [ [ "Generative closed loop", 17, "#7c6fd6" ], [ "HA-RL (R2R)", .9, VIOLET ] ];
+    const W = 420, H = 230, m = {
+        l: 20,
+        r: 30,
+        t: 30,
+        b: 30
+    }, svg = svgFor("#chart-cost", W, H);
+    const x = d3.scaleLinear().domain([ 0, 18 ]).range([ m.l, W - m.r ]), y = d3.scaleBand().domain(D.map((d => d[0]))).range([ m.t, H - m.b - 20 ]).padding(.55);
+    svg.append("g").attr("class", "axis").attr("transform", `translate(0,${H - m.b - 20})`).call(d3.axisBottom(x).ticks(6).tickFormat((d => d + " s")));
+    svg.selectAll(".yl").data(D).enter().append("text").attr("x", m.l).attr("y", (d => y(d[0]) - 8)).attr("font-size", 12.5).attr("fill", "#fff").attr("font-weight", 600).text((d => d[0]));
+    const b = svg.selectAll(".b").data(D).enter().append("rect").attr("x", x(0)).attr("y", (d => y(d[0]))).attr("height", y.bandwidth()).attr("rx", 5).attr("width", 0).attr("fill", (d => d[2]));
+    const t = svg.selectAll(".t").data(D).enter().append("text").attr("y", (d => y(d[0]) + y.bandwidth() / 2 + 5)).attr("x", (d => x(d[1]) + 8)).attr("font-size", 14).attr("font-weight", 700).attr("fill", "#fff").attr("opacity", 0).text((d => d[1] + " s"));
+    const big = svg.append("text").attr("x", W - m.r).attr("y", y(D[1][0]) + y.bandwidth() / 2 + 8).attr("text-anchor", "end").attr("font-size", 30).attr("font-weight", 800).attr("fill", VIOLET).attr("opacity", 0).text("19× cheaper");
+    onView("#chart-cost", (() => {
+        b.transition().duration(1400).delay(((d, i) => i * 250)).ease(d3.easeCubicOut).attr("width", (d => x(d[1]) - x(0)));
+        t.transition().delay(1200).duration(400).attr("opacity", 1);
+        big.transition().delay(1600).duration(600).attr("opacity", 1);
+    }));
+})();
+
+(function() {
+    const STEPS = [ "Released", "+ SIA", "+ SRA", "+ TRA (R2R)" ], RIGS = [ "Rig A · 1 camera", "Rig B · 4 cameras", "Rig C · 5 cameras" ];
+    const DATA = {
+        pe: [ [ .014, .211, .243, .475 ], [ .059, .187, .192, .403 ], [ .041, .2, .207, .42 ] ],
+        as: [ [ .392, .43, .467, .467 ], [ .334, .343, .349, .491 ], [ .327, .334, .356, .451 ] ]
+    };
+    const COL = [ "#475569", "rgba(45,212,191,.42)", "rgba(45,212,191,.68)", "url(#gt)" ];
+    d3.select("#rig-legend").html(STEPS.map(((s, i) => `<span><i style="background:${i === 3 ? "linear-gradient(#5eead4,#0f9f8c)" : COL[i]}"></i>${s}</span>`)).join(""));
+    const W = 900, H = 340, m = {
+        l: 50,
+        r: 16,
+        t: 24,
+        b: 40
+    }, svg = svgFor("#chart-rig", W, H);
+    defs(svg);
+    const x0 = d3.scaleBand().domain(RIGS).range([ m.l, W - m.r ]).padding(.18), x1 = d3.scaleBand().domain(STEPS).range([ 0, x0.bandwidth() ]).padding(.14);
+    const y = d3.scaleLinear().domain([ 0, .55 ]).range([ H - m.b, m.t ]);
+    svg.append("g").attr("class", "grid").attr("transform", `translate(${m.l},0)`).call(d3.axisLeft(y).ticks(5).tickSize(-(W - m.l - m.r)).tickFormat("")).call((g => g.select(".domain").remove()));
+    svg.append("g").attr("class", "axis").attr("transform", `translate(${m.l},0)`).call(d3.axisLeft(y).ticks(5).tickFormat(d3.format(".1f")));
+    svg.append("g").attr("class", "axis").attr("transform", `translate(0,${H - m.b})`).call(d3.axisBottom(x0).tickSize(0)).selectAll("text").attr("dy", "1.3em").attr("font-size", 13).attr("fill", "#fff");
+    const flat = k => RIGS.flatMap(((r, ri) => STEPS.map(((s, si) => ({
+        r: r,
+        s: s,
+        si: si,
+        v: DATA[k][ri][si]
+    })))));
+    const g = svg.append("g");
+    const bars = g.selectAll("rect").data(flat("pe")).enter().append("rect").attr("x", (d => x0(d.r) + x1(d.s))).attr("width", x1.bandwidth()).attr("rx", 4).attr("y", y(0)).attr("height", 0).attr("fill", (d => COL[d.si]));
+    const lab = g.selectAll("text.v").data(flat("pe")).enter().append("text").attr("class", "v").attr("x", (d => x0(d.r) + x1(d.s) + x1.bandwidth() / 2)).attr("y", y(0) - 6).attr("text-anchor", "middle").attr("font-size", 11.5).attr("font-weight", (d => d.si === 3 ? 700 : 400)).attr("fill", (d => d.si === 3 ? "#fff" : "rgba(244,246,248,.7)")).attr("opacity", 0).text((d => d.v.toFixed(3)));
+    const steps = g.append("g");
+    function draw(k, first) {
+        const F = flat(k);
+        bars.data(F).transition().duration(first ? 1e3 : 700).delay((d => (first ? d.si * 220 : 0) + RIGS.indexOf(d.r) * 60)).ease(d3.easeCubicOut).attr("y", (d => y(d.v))).attr("height", (d => y(0) - y(d.v)));
+        lab.data(F).transition().duration(first ? 1e3 : 700).delay((d => first ? 300 + d.si * 220 : 0)).attr("y", (d => y(d.v) - 6)).attr("opacity", 1).tween("text", (function(d) {
+            const el = this, i = d3.interpolateNumber(parseFloat(el.textContent) || 0, d.v);
+            return t => el.textContent = i(t).toFixed(3);
+        }));
+        const lines = RIGS.map(((r, ri) => DATA[k][ri].map(((v, si) => [ x0(r) + x1(STEPS[si]) + x1.bandwidth() / 2, y(v) ]))));
+        const sel = steps.selectAll("path").data(lines);
+        const ln = d3.line().curve(d3.curveStepAfter);
+        sel.enter().append("path").attr("fill", "none").attr("stroke", "rgba(94,234,212,.55)").attr("stroke-dasharray", "4 4").attr("stroke-width", 1.4).attr("opacity", 0).attr("d", ln).merge(sel).transition().delay(first ? 1300 : 0).duration(700).attr("opacity", 1).attr("d", ln);
+    }
+    onView("#chart-rig", (() => draw("pe", true)));
+    $("det-tabs").querySelectorAll("button").forEach((b => b.addEventListener("click", (() => {
+        $("det-tabs").querySelectorAll("button").forEach((x => x.classList.toggle("on", x === b)));
+        draw(b.dataset.d, false);
+    }))));
+})();
+
+(function() {
+    const ROWS = [ [ "nuScenes → Waymo", .066, .309, .317 ], [ "nuScenes → Lyft", .046, .456, .474 ] ];
+    const W = 900, H = 190, m = {
+        l: 160,
+        r: 40,
+        t: 20,
+        b: 36
+    }, svg = svgFor("#chart-dots", W, H);
+    const x = d3.scaleLinear().domain([ 0, .5 ]).range([ m.l, W - m.r ]), y = d3.scaleBand().domain(ROWS.map((r => r[0]))).range([ m.t, H - m.b ]).padding(.4);
+    svg.append("g").attr("class", "grid").attr("transform", `translate(0,${H - m.b})`).call(d3.axisBottom(x).ticks(5).tickSize(-(H - m.t - m.b)).tickFormat("")).call((g => g.select(".domain").remove()));
+    svg.append("g").attr("class", "axis").attr("transform", `translate(0,${H - m.b})`).call(d3.axisBottom(x).ticks(5).tickFormat(d3.format(".1f")));
+    svg.selectAll(".yl").data(ROWS).enter().append("text").attr("x", m.l - 14).attr("y", (r => y(r[0]) + y.bandwidth() / 2 + 5)).attr("text-anchor", "end").attr("font-size", 13.5).attr("fill", "#fff").attr("font-weight", 600).text((r => r[0]));
+    const cy = r => y(r[0]) + y.bandwidth() / 2;
+    const rail = svg.selectAll(".rl").data(ROWS).enter().append("line").attr("x1", (r => x(r[1]))).attr("x2", (r => x(r[1]))).attr("y1", cy).attr("y2", cy).attr("stroke", "rgba(255,255,255,.25)").attr("stroke-width", 2);
+    const mk = (i, col, r0) => svg.selectAll(".d" + i).data(ROWS).enter().append("circle").attr("cx", (r => x(r[1]))).attr("cy", cy).attr("r", 0).attr("fill", col).attr("stroke", "#0b0d10").attr("stroke-width", 2);
+    const d1 = mk(1, SLATE), d2 = mk(2, AMBER), d3c = mk(3, TEAL);
+    const tl = (i, col, dy) => svg.selectAll(".tl" + i).data(ROWS).enter().append("text").attr("x", (r => x(r[i]))).attr("y", (r => cy(r) + dy)).attr("text-anchor", "middle").attr("font-size", 12).attr("font-weight", 700).attr("fill", col).attr("opacity", 0).text((r => r[i].toFixed(3)));
+    const t1 = tl(1, "#94a3b8", -14), t2 = tl(2, AMBER, 24), t3 = tl(3, TEAL, -14);
+    onView("#chart-dots", (() => {
+        d1.transition().duration(400).attr("r", 7);
+        t1.transition().delay(200).attr("opacity", 1);
+        rail.transition().delay(300).duration(1200).ease(d3.easeCubicOut).attr("x2", (r => x(r[3])));
+        d2.transition().delay(300).duration(1e3).ease(d3.easeCubicOut).attr("cx", (r => x(r[2]))).attr("r", 7);
+        t2.transition().delay(1200).attr("opacity", 1);
+        d3c.transition().delay(500).duration(1100).ease(d3.easeCubicOut).attr("cx", (r => x(r[3]))).attr("r", 9);
+        t3.transition().delay(1500).attr("opacity", 1);
+    }));
+})();
+
+boot();
+</script>
+<script type="module" src="media/p2p/viewer.js"></script>
+</body>
+</html>
